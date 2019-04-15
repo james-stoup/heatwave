@@ -13,7 +13,7 @@ import click
 
 import subprocess
 from datetime import timedelta, date, datetime
-
+import monthdelta
 
 
 def daterange(start_date, end_date):
@@ -54,6 +54,8 @@ def find_commits(user_name, git_repo, since_str, before_str):
     process_grep = subprocess.Popen(['grep', '-i', user_name], stdin=process_uniq.stdout, stdout=subprocess.PIPE)
     output = process_grep.communicate()[0]
 
+    print(output)
+    
     return output
 
 
@@ -73,24 +75,31 @@ def process_output(output):
         # build the dictionary
         user_history.update({commit_date : int(count)})
 
-        if i == 0:
-            first_day = commit_date
+        # if i == 0:
+        #     first_day = commit_date
 
-        if i == (len(lines)-1):
-            last_day = commit_date
+        # if i == (len(lines)-1):
+        #     last_day = commit_date
+
+
+    first_day = datetime.now()
+    last_day = first_day - timedelta(days=365)
 
     return (user_history, first_day, last_day)
 
 
-def print_months_header(user_history):
+def print_months_header():
     """ Print the header to show the months """
     # get the months, starting from now and working back (so we know what order to print them in)
-    month_order = {}
-    for key in user_history:
-        month_int = int(key.split('-')[1])
-        month = date(1900, month_int, 1).strftime('%b')
-        month_order[month] = True
+    prev_month = datetime.now()
+    month_order = []
+    print('    ', end='')    
+    for i in range(1, 13):
+        month_order.append(prev_month.strftime('%b'))
+        prev_month = prev_month + monthdelta.monthdelta(-1)
 
+    month_order.reverse()
+    
     for key in month_order:
         print('%3s  ' % key, end='')
     print('')
@@ -98,41 +107,72 @@ def print_months_header(user_history):
 
 def print_heat_map(user_history, first_day, last_day):
     # now finally print out the stats
-    start_day = date(int(first_day.split('-')[0]), int(first_day.split('-')[1]), int(first_day.split('-')[2]))
-    end_day   = date(int(last_day.split('-')[0]),  int(last_day.split('-')[1]),  int(last_day.split('-')[2]))
-    day_count = 0
-    
-    for day in daterange(start_day, end_day):
-        cur_day = day.strftime('%Y-%m-%d')
-        labels=['Mon', 'Wed', 'Fri']
-        prefix = '    '
 
-        if (day_count % 52) == 0:
-            if (day_count / 52) == 1:
-                print('%s ' % labels[0], end='')
-            elif (day_count / 52) == 3:
-                print('%s ' % labels[1], end='')
-            elif (day_count / 52) == 5:
-                print('%s ' % labels[2], end='')
-            else:
-                print('    ' , end='')
+    day_count = 0
+    myarray = [[], [], [], [], [], [], []]
+    week = 0
+    day = 0
+    for x in daterange(last_day, first_day):
+        cur_day = x.strftime('%Y-%m-%d')
+        cur_line = myarray[week]
+        cur_line.append(day)
+        myarray.insert(week, cur_line)
+        week += 1
+        day += 1
+
+        if week == 6:
+            week = 0
+
+        if day == 51:
+            day = 0
+
+
+    for r in myarray:
+        for c in r:
+            print(c, end=' ')
+        print()
+
+                
+    # for day in daterange(last_day, first_day):
+    #     cur_day = day.strftime('%Y-%m-%d')
+    #     labels=['Mon', 'Wed', 'Fri']
+    #     prefix = '    '
+
+    #     if (day_count % 52) == 0:
+    #         if (day_count / 52) == 1:
+    #             print('%s ' % labels[0], end='')
+    #         elif (day_count / 52) == 3:
+    #             print('%s ' % labels[1], end='')
+    #         elif (day_count / 52) == 5:
+    #             print('%s ' % labels[2], end='')
+    #         else:
+    #             print('    ' , end='')
+
+    #     #print('%s ' % day_count, end='')
+
+
+    #     if cur_day in user_history:
+    #         print('X', end='')
+    #     else:
+    #         print('.', end='')
+
             
-        if cur_day in user_history:
-            symbol = ''
-            if user_history[cur_day] == 1:
-                symbol = '.'
-            if user_history[cur_day] == 2:
-                symbol = '*'
-            if user_history[cur_day] > 2:
-                symbol = '#'
-            print('%s' % symbol, end='')
-        else:
-            print(' ', end='')
+        #if cur_day in user_history:
+        #     symbol = ''
+        #     if user_history[cur_day] == 1:
+        #         symbol = '.'
+        #     if user_history[cur_day] == 2:
+        #         symbol = '*'
+        #     if user_history[cur_day] > 2:
+        #         symbol = '#'
+        #     print('%s' % symbol, end='')
+        # else:
+        #     print(' ', end='')
             
-        day_count = day_count + 1
+#        day_count = day_count + 1
         
-        if day_count % 52 == 0:
-            print('')
+#        if day_count % 52 == 0:
+#            print('')
 
     print('')
 
@@ -160,15 +200,11 @@ def heatwave(user_name, git_repo, status_type, verbose):
     # Use git to determine what commits they made on which days
     output = find_commits(user_name, git_repo, since_str, before_str)
 
-    print(output)
-    
     # Clean up the output so it can be used
     user_history, first_day, last_day = process_output(output)
 
-    print(user_history)
-    
     # Print everything out
-    print_months_header(user_history)
+    print_months_header()
     print_heat_map(user_history, first_day, last_day)
     
 
