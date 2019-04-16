@@ -17,6 +17,18 @@ import monthdelta
 
 
 
+def print_additional_stats(user_history):
+    """ Throw out some additional stats on the data generated """
+    total_commit_days = len(user_history)
+    total_commits = 0
+
+    for key, value in user_history.items():
+        total_commits += value
+
+    print('Total Days    : %s' % total_commit_days)
+    print('Total Commits : %s' % total_commits)
+    
+
 # Function to print a space of different shades of green (lightest to darkest)
 def print_color(shade):
     if shade == 1:
@@ -75,6 +87,7 @@ def find_commits(user_name, git_repo, since_str, before_str):
 
 
 def process_output(output):
+    """ Build a dictionary that ties number of commits to a date  """
     user_history = {}
     first_day = ''
     last_day  = ''
@@ -121,6 +134,7 @@ def print_months_header():
 
 
 def print_heat_map(user_history, first_day, last_day):
+    """ Display the heat map to the terminal using colors or symbols """
     # now finally print out the stats
 
     day_count = 0
@@ -200,14 +214,24 @@ def print_heat_map(user_history, first_day, last_day):
 @click.option('--status-type', type=click.Choice(['color', 'symbol']), default='color', help = 'Choose how to visualize the data')
 @click.option('--verbose', is_flag=True, help='Prints additional information')
 def heatwave(user_name, git_repo, status_type, verbose):
-    """ Print a visualization of your git history """
+    """ 
+    Visualize your git history on the terminal!
 
-    # put in a check in to see if the user name is valid
-    # put in a check in to see if that directory is a git repo
-    # put in a check to see if the user even has a year's worth of data
-    
-    if verbose:
-        click.echo('EXTRA DATA COMING YOUR WAY!')
+    Now you can view a beautiful representation of your git progress
+    right here on the command line. No longer will you have to log
+    into github to compulsively check to see how many commits you've
+    made this year, now you can feel inadequate without ever having
+    to leave the command line!
+
+    Example: ./heatwave.py "James Stoup" /home/jstoup/my_git_repo
+
+    """
+
+    dot_git_dir = os.path.join(git_repo, '.git')
+    if os.path.isdir(dot_git_dir) is False:
+        print('Invalid Repository Path: %s' % git_repo)
+        print('Please enter a path to a valid git repository!')
+        sys.exit()
 
     # Get the start and end dates corresponding to exactly a year from today
     since_str, before_str = generate_dates()
@@ -221,7 +245,10 @@ def heatwave(user_name, git_repo, status_type, verbose):
     # Print everything out
     print_months_header()
     print_heat_map(user_history, first_day, last_day)
-    
 
+    if verbose:
+        print_additional_stats(user_history)
+
+        
 if __name__ == '__main__':
     heatwave()
