@@ -16,6 +16,21 @@ from datetime import timedelta, date, datetime
 import monthdelta
 
 
+
+# Function to print a space of different shades of green (lightest to darkest)
+def print_color(shade):
+    if shade == 1:
+        print(u"\u001b[48;5;47m" + " " + u"\u001b[0m", end='')
+    elif shade == 2:
+        print(u"\u001b[48;5;40m" + " " + u"\u001b[0m", end='')
+    elif shade == 3:
+        print(u"\u001b[48;5;34m" + " " + u"\u001b[0m", end='')
+    elif shade == 4:        
+        print(u"\u001b[48;5;28m" + " " + u"\u001b[0m", end='')
+    else:
+        print(' ', end='')
+
+
 def daterange(start_date, end_date):
     """ Return a series of dates from start to end  """
     for n in range(int ((end_date - start_date).days)):
