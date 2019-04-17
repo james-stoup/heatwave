@@ -4,6 +4,7 @@
 # Author: James Stoup
 # Date: 14 APR 2019
 
+
 import sys
 import csv
 import optparse
@@ -17,7 +18,7 @@ import monthdelta
 
 
 
-def print_additional_stats(user_history):
+def print_additional_stats(user_history, git_repo, user_name):
     """ Throw out some additional stats on the data generated """
     total_commit_days = len(user_history)
     total_commits = 0
@@ -25,22 +26,26 @@ def print_additional_stats(user_history):
     for key, value in user_history.items():
         total_commits += value
 
-    print('Total Days    : %s' % total_commit_days)
-    print('Total Commits : %s' % total_commits)
+    print('Git Repository : %s' % os.path.basename(os.path.normpath(git_repo)))
+    print('Git Author     : %s' % user_name)
+    print('Total Days     : %s' % total_commit_days)
+    print('Total Commits  : %s' % total_commits)
+    print('')
     
 
 # Function to print a space of different shades of green (lightest to darkest)
 def print_color(shade):
+    space = '  '
     if shade == 1:
-        print(u"\u001b[48;5;47m" + " " + u"\u001b[0m", end='')
+        print(u"\u001b[48;5;47m" + space + u"\u001b[0m", end='')
     elif shade == 2:
-        print(u"\u001b[48;5;40m" + " " + u"\u001b[0m", end='')
+        print(u"\u001b[48;5;40m" + space + u"\u001b[0m", end='')
     elif shade == 3:
-        print(u"\u001b[48;5;34m" + " " + u"\u001b[0m", end='')
-    elif shade == 4:        
-        print(u"\u001b[48;5;28m" + " " + u"\u001b[0m", end='')
+        print(u"\u001b[48;5;34m" + space + u"\u001b[0m", end='')
+    elif shade >= 4:        
+        print(u"\u001b[48;5;28m" + space + u"\u001b[0m", end='')
     else:
-        print(' ', end='')
+        print(space, end='')
 
 
 def daterange(start_date, end_date):
@@ -73,7 +78,7 @@ def find_commits(user_name, git_repo, since_str, before_str):
                '--pretty=format:"%ad %an"',
                '--since="%s"' % since_str,
                '--before="%s"' % before_str]
-    
+
     # a series of bash tricks to get what we want
     process_git  = subprocess.Popen(git_cmd, cwd=git_repo, stdout=subprocess.PIPE)
     process_sort = subprocess.Popen(['sort'], stdin=process_git.stdout, stdout=subprocess.PIPE)
@@ -81,8 +86,6 @@ def find_commits(user_name, git_repo, since_str, before_str):
     process_grep = subprocess.Popen(['grep', '-i', user_name], stdin=process_uniq.stdout, stdout=subprocess.PIPE)
     output = process_grep.communicate()[0]
 
-    print(output)
-    
     return output
 
 
@@ -92,7 +95,7 @@ def process_output(output):
     first_day = ''
     last_day  = ''
     lines = output.splitlines()
-    
+
     for i, line in enumerate(lines):
         # this will turn each line into a format that can be easily used
         cur_line   = line.decode().strip()
@@ -103,12 +106,6 @@ def process_output(output):
         # build the dictionary
         user_history.update({commit_date : int(count)})
 
-        # if i == 0:
-        #     first_day = commit_date
-
-        # if i == (len(lines)-1):
-        #     last_day = commit_date
-
 
     first_day = datetime.now()
     last_day = first_day - timedelta(days=365)
@@ -116,95 +113,80 @@ def process_output(output):
     return (user_history, first_day, last_day)
 
 
+def print_border(size):
+    for i in range(0, size):
+        print('=', end='')
+    print('')
+    
 def print_months_header():
     """ Print the header to show the months """
     # get the months, starting from now and working back (so we know what order to print them in)
     prev_month = datetime.now()
     month_order = []
-    print('    ', end='')    
+    month_header_str = '    '
     for i in range(1, 13):
         month_order.append(prev_month.strftime('%b'))
         prev_month = prev_month + monthdelta.monthdelta(-1)
 
     month_order.reverse()
-    
+
+
     for key in month_order:
-        print('%3s  ' % key, end='')
+        month_header_str += ('   %s   ' % key)
+
+    print('')
+    print(month_header_str, end='')
     print('')
 
+    return len(month_header_str)
 
 def print_heat_map(user_history, first_day, last_day):
     """ Display the heat map to the terminal using colors or symbols """
     # now finally print out the stats
+    suns = []
+    mons = []
+    tues = []
+    weds = []
+    thrs = []
+    fris = []
+    sats = []
 
-    day_count = 0
-    myarray = [[], [], [], [], [], [], []]
-    week = 0
-    day = 0
     for x in daterange(last_day, first_day):
         cur_day = x.strftime('%Y-%m-%d')
-        cur_line = myarray[week]
-        cur_line.append(day)
-        myarray.insert(week, cur_line)
-        week += 1
-        day += 1
-
-        if week == 6:
-            week = 0
-
-        if day == 51:
-            day = 0
-
-
-    for r in myarray:
-        for c in r:
-            print(c, end=' ')
-        print()
-
-                
-    # for day in daterange(last_day, first_day):
-    #     cur_day = day.strftime('%Y-%m-%d')
-    #     labels=['Mon', 'Wed', 'Fri']
-    #     prefix = '    '
-
-    #     if (day_count % 52) == 0:
-    #         if (day_count / 52) == 1:
-    #             print('%s ' % labels[0], end='')
-    #         elif (day_count / 52) == 3:
-    #             print('%s ' % labels[1], end='')
-    #         elif (day_count / 52) == 5:
-    #             print('%s ' % labels[2], end='')
-    #         else:
-    #             print('    ' , end='')
-
-    #     #print('%s ' % day_count, end='')
-
-
-    #     if cur_day in user_history:
-    #         print('X', end='')
-    #     else:
-    #         print('.', end='')
-
-            
-        #if cur_day in user_history:
-        #     symbol = ''
-        #     if user_history[cur_day] == 1:
-        #         symbol = '.'
-        #     if user_history[cur_day] == 2:
-        #         symbol = '*'
-        #     if user_history[cur_day] > 2:
-        #         symbol = '#'
-        #     print('%s' % symbol, end='')
-        # else:
-        #     print(' ', end='')
-            
-#        day_count = day_count + 1
+        week_day = x.strftime('%a')
         
-#        if day_count % 52 == 0:
-#            print('')
+        if week_day == 'Sun':
+            suns.append(cur_day)
+        elif week_day == 'Mon':
+            mons.append(cur_day)
+        elif week_day == 'Tue':
+            tues.append(cur_day)
+        elif week_day == 'Wed':
+            weds.append(cur_day)
+        elif week_day == 'Thu':
+            thrs.append(cur_day)
+        elif week_day == 'Fri':
+            fris.append(cur_day)
+        elif week_day == 'Sat':
+            sats.append(cur_day)
 
-    print('')
+    weeks = [suns, mons, tues, weds, thrs, fris, sats]
 
+    labels = ['   ', 'Mon', '   ', 'Wed', '   ', 'Fri', '   ']
+    print_label = 0
+
+    for days in weeks:
+        print('%s  ' % labels[print_label], end='')
+        print_label += 1
+
+        for day in days:
+            if day in user_history:
+                #print('%s - %s' % (day, user_history[day]))
+                print_color(user_history[day])
+            else:
+                print('  ', end='')
+                #print('%s  ' % day, end='')
+        print(' ')
 
 
 
@@ -243,11 +225,14 @@ def heatwave(user_name, git_repo, status_type, verbose):
     user_history, first_day, last_day = process_output(output)
 
     # Print everything out
-    print_months_header()
+    header_len = print_months_header()
+    print_border(header_len)
     print_heat_map(user_history, first_day, last_day)
+    print_border(header_len)
+    print(' ')
 
     if verbose:
-        print_additional_stats(user_history)
+        print_additional_stats(user_history, git_repo, user_name)
 
         
 if __name__ == '__main__':
