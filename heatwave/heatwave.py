@@ -33,21 +33,37 @@ def print_additional_stats(user_history, git_repo, user_name):
     print('')
     
 
-# Function to print a space of different shades of green (lightest to darkest)
-def print_color(shade):
+def print_status(shade, status_type):
+    """ Function to print a space of different shades of green (lightest to darkest) """
+
     space = '  '
-    if shade == 1:
-        print(u"\u001b[48;5;47m" + space + u"\u001b[0m", end='')
-    elif shade == 2:
-        print(u"\u001b[48;5;40m" + space + u"\u001b[0m", end='')
-    elif shade == 3:
-        print(u"\u001b[48;5;34m" + space + u"\u001b[0m", end='')
-    elif shade >= 4:        
-        print(u"\u001b[48;5;28m" + space + u"\u001b[0m", end='')
-    else:
-        print(space, end='')
+    if status_type == 'color':
+        if shade == 1:
+            print(u"\u001b[48;5;47m" + space + u"\u001b[0m", end='')
+        elif shade == 2:
+            print(u"\u001b[48;5;40m" + space + u"\u001b[0m", end='')
+        elif shade == 3:
+            print(u"\u001b[48;5;34m" + space + u"\u001b[0m", end='')
+        elif shade >= 4:        
+            print(u"\u001b[48;5;28m" + space + u"\u001b[0m", end='')
+        else:
+            print(space, end='')
 
-
+    elif status_type == 'symbol':
+        if shade == 1:
+            print('..', end='')
+        elif shade == 2:
+            print('--', end='')
+        elif shade == 3:
+            print('**', end='')
+        elif shade >= 4:        
+            print('##', end='')
+        else:
+            print(space, end='')
+            
+    elif status_type == 'number':
+        print('%s ' % shade, end='')
+            
 def daterange(start_date, end_date):
     """ Return a series of dates from start to end  """
     for n in range(int ((end_date - start_date).days)):
@@ -114,9 +130,11 @@ def process_output(output):
 
 
 def print_border(size):
+    """ Print a simple border """
     for i in range(0, size):
         print('=', end='')
     print('')
+
     
 def print_months_header():
     """ Print the header to show the months """
@@ -140,7 +158,7 @@ def print_months_header():
 
     return len(month_header_str)
 
-def print_heat_map(user_history, first_day, last_day):
+def print_heat_map(user_history, first_day, last_day, status_type):
     """ Display the heat map to the terminal using colors or symbols """
     # now finally print out the stats
     suns = []
@@ -181,11 +199,9 @@ def print_heat_map(user_history, first_day, last_day):
 
         for day in days:
             if day in user_history:
-                #print('%s - %s' % (day, user_history[day]))
-                print_color(user_history[day])
+                print_status(user_history[day], status_type)
             else:
                 print('  ', end='')
-                #print('%s  ' % day, end='')
         print(' ')
 
 
@@ -193,8 +209,8 @@ def print_heat_map(user_history, first_day, last_day):
 @click.command()
 @click.argument('user-name')
 @click.argument('git-repo', type=click.Path(exists=True), default='.')
-@click.option('--status-type', type=click.Choice(['color', 'symbol']), default='color', help = 'Choose how to visualize the data')
-@click.option('--verbose', is_flag=True, help='Prints additional information')
+@click.option('--status-type', type=click.Choice(['color', 'symbol', 'number']), default='color', help = 'Choose how to visualize the data')
+@click.option('-v', '--verbose', is_flag=True, help='Prints additional information')
 def heatwave(user_name, git_repo, status_type, verbose):
     """ 
     Visualize your git history on the terminal!
@@ -227,7 +243,7 @@ def heatwave(user_name, git_repo, status_type, verbose):
     # Print everything out
     header_len = print_months_header()
     print_border(header_len)
-    print_heat_map(user_history, first_day, last_day)
+    print_heat_map(user_history, first_day, last_day, status_type)
     print_border(header_len)
     print(' ')
 
