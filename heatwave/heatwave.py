@@ -18,6 +18,22 @@ import monthdelta
 
 
 
+
+def print_git_users(git_repo):
+    git_cmd = ['git',
+               'shortlog',
+               '-s']
+
+    process_git = subprocess.Popen(git_cmd, cwd=git_repo, stdout=subprocess.PIPE)
+    process_cut = subprocess.Popen(['cut', '-c8-'], stdin=process_git.stdout, stdout=subprocess.PIPE)
+    process_sort = subprocess.Popen(['sort'], stdin=process_cut.stdout, stdout=subprocess.PIPE)
+    output = process_sort.communicate()[0]
+
+    lines = output.splitlines()
+    for line in lines:
+        print('  %s' % line.decode().strip())
+    
+
 def print_additional_stats(user_history, git_repo, user_name):
     """ Throw out some additional stats on the data generated """
     total_commit_days = len(user_history)
@@ -209,9 +225,10 @@ def print_heat_map(user_history, first_day, last_day, status_type):
 @click.command()
 @click.argument('user-name')
 @click.argument('git-repo', type=click.Path(exists=True), default='.')
+@click.option('-l', '--list-committers', is_flag=True, help='Lists all the committers for a git repo')
 @click.option('--status-type', type=click.Choice(['color', 'symbol', 'number']), default='color', help = 'Choose how to visualize the data')
 @click.option('-v', '--verbose', is_flag=True, help='Prints additional information')
-def heatwave(user_name, git_repo, status_type, verbose):
+def heatwave(user_name, git_repo, status_type, verbose, list_committers):
     """ 
     Visualize your git history on the terminal!
 
@@ -231,6 +248,11 @@ def heatwave(user_name, git_repo, status_type, verbose):
         print('Please enter a path to a valid git repository!')
         sys.exit()
 
+    if list_committers:
+        print('Git Committers:')
+        print_git_users(git_repo)
+        sys.exit()
+        
     # Get the start and end dates corresponding to exactly a year from today
     since_str, before_str = generate_dates()
 
