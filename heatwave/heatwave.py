@@ -42,7 +42,7 @@ def print_additional_stats(user_history, git_repo, user_name):
     for key, value in user_history.items():
         total_commits += value
 
-    print('Git Repository : {}'.format(os.path.basename(os.path.normpath(git_repo))))
+    print('Git Repository : {}'.format(os.path.basename(os.path.realpath(git_repo))))
     print('Git Author     : {}'.format(user_name))
     print('Total Days     : {}'.format(total_commit_days))
     print('Total Commits  : {}'.format(total_commits))
@@ -51,27 +51,29 @@ def print_additional_stats(user_history, git_repo, user_name):
 
 def print_status(shade, status_type):
     """ Function to print a space of different shades of green (lightest to darkest) """
-
-    space = '   '
-    shade = 4 if shade > 4 else shade
-    status = dict(color={
-                     1: u"\u001b[48;5;47m" + space + u"\u001b[0m",
-                     2: u"\u001b[48;5;40m" + space + u"\u001b[0m",
-                     3: u"\u001b[48;5;34m" + space + u"\u001b[0m",
-                     4: u"\u001b[48;5;28m" + space + u"\u001b[0m",
-                 },
-                 symbol={
-                     1: '..',
-                     2: '--',
-                     3: '**',
-                     4: '##',
-                 })
+    space = '  '
+    status = dict(
+        color={
+            1: u"\u001b[48;5;47m" + space + u"\u001b[0m",
+            2: u"\u001b[48;5;40m" + space + u"\u001b[0m",
+            3: u"\u001b[48;5;34m" + space + u"\u001b[0m",
+            4: u"\u001b[48;5;28m" + space + u"\u001b[0m",
+            5: u"\u001b[48;5;22m" + space + u"\u001b[0m"
+        },
+        symbol={
+            1: '..',
+            2: '--',
+            3: '~~',
+            4: '**',
+            5: '##',
+        })
 
     # either print the number of commits, or look in the dict
     if status_type == 'number':
         print('{} '.format(shade), end='')
     else:
-        print(status[status_type].get(shade, space), end='')
+        shade = 5 if shade > 5 else shade
+        print('{}'.format(status[status_type].get(shade, space)), end='')
 
         
 def daterange(start_date , end_date):
@@ -104,9 +106,19 @@ def find_commits(user_name, git_repo, since_str, before_str):
                '--since="{}"'.format(since_str),
                '--before="{}"'.format(before_str)]
 
+    sed_cmd = ['sed',
+               's/\([A-Za-z]\)-\([A-Za-z]\)/\1 \2/g']
+
+    tr_cmd = ['tr',
+              '[:upper:]',
+              '[:lower:]']
+    
     # a series of bash tricks to get what we want
+    # so this is super hacky and really needs to be reworked
     process_git  = subprocess.Popen(git_cmd, cwd=git_repo, stdout=subprocess.PIPE)
-    process_sort = subprocess.Popen(['sort'], stdin=process_git.stdout, stdout=subprocess.PIPE)
+    process_sed  = subprocess.Popen(sed_cmd, stdin=process_git.stdout, stdout=subprocess.PIPE)
+    process_tr   = subprocess.Popen(tr_cmd, stdin=process_sed.stdout, stdout=subprocess.PIPE)
+    process_sort = subprocess.Popen(['sort'], stdin=process_tr.stdout, stdout=subprocess.PIPE)
     process_uniq = subprocess.Popen(['uniq', '-c'], stdin=process_sort.stdout, stdout=subprocess.PIPE)
     process_grep = subprocess.Popen(['grep', '-i', user_name], stdin=process_uniq.stdout, stdout=subprocess.PIPE)
     output = process_grep.communicate()[0]
@@ -131,7 +143,6 @@ def process_output(output):
 
         # build the dictionary
         user_history.update({commit_date : int(count)})
-
 
     first_day = datetime.now()
     last_day = first_day - timedelta(days=365)
@@ -181,10 +192,11 @@ def print_heat_map(user_history, first_day, last_day, status_type):
     fris = []
     sats = []
 
-    for x in daterange(last_day, first_day):
+    # sort the dates into weeks
+    for x in daterange(last_day, first_day + timedelta(days=1)):
         cur_day = x.strftime('%Y-%m-%d')
         week_day = x.strftime('%a')
-        
+
         if week_day == 'Sun':
             suns.append(cur_day)
         elif week_day == 'Mon':
@@ -199,16 +211,37 @@ def print_heat_map(user_history, first_day, last_day, status_type):
             fris.append(cur_day)
         elif week_day == 'Sat':
             sats.append(cur_day)
+        else:
+            print('Something has gone wrong...')
 
-    weeks = [suns, mons, tues, weds, thrs, fris, sats]
 
+    # this is so ugly, figure out a better way to sort the days
+    day_to_start = last_day.strftime('%a')
+    if day_to_start == 'Sun':
+        weeks = [suns, mons, tues, weds, thrs, fris, sats]
+    elif day_to_start == 'Mon':
+        weeks = [mons, tues, weds, thrs, fris, sats, suns]
+    elif day_to_start == 'Tue':
+        weeks = [tues, weds, thrs, fris, sats, suns, mons]
+    elif day_to_start == 'Wed':
+        weeks = [weds, thrs, fris, sats, suns, mons, tues]
+    elif day_to_start == 'Thu':
+        weeks = [thrs, fris, sats, suns, mons, tues, weds]
+    elif day_to_start == 'Fri':
+        weeks = [fris, sats, suns, mons, tues, weds, thrs]
+    else:
+        weeks = [sats, suns, mons, tues, weds, thrs, fris]
+
+    # Now print everything
     labels = ['   ', 'Mon', '   ', 'Wed', '   ', 'Fri', '   ']
     print_label = 0
 
     for days in weeks:
-        print('{}  '.format(labels[print_label], end=''))
+        # print the mon/wed/fri labels
+        print('{}  '.format(labels[print_label]), end='')
         print_label += 1
 
+        # print each commit day in the chosen format
         for day in days:
             if day in user_history:
                 print_status(user_history[day], status_type)
@@ -234,7 +267,13 @@ def heatwave(user_name, git_repo, status_type, verbose, list_committers):
     made this year, now you can feel inadequate without ever having
     to leave the command line!
 
-    Example: ./heatwave.py "James Stoup" /home/jstoup/my_git_repo
+    Example: 
+        # print standard output
+        ./heatwave.py "James Stoup" /home/jstoup/my_git_repo
+
+    Example:
+        # print number of commits each day and show additional stats
+        ./heatwave.py stoup /home/jstoup/my_git_repo --status-type number -v
 
     """
 
