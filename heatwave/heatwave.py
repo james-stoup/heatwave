@@ -73,12 +73,32 @@ def generate_status_values():
 
 
 
-def print_graph_key():
-    status_values = generate_status_values()
+def print_graph_key(status_type):
+    """ Print out a key so the colors make sense """
 
-    for color in status_values['color']:
-        print(status_values[color])
+    if status_type != 'number':
 
+        print('  ==   KEY  ==')
+        print('    ', end='')
+        
+        
+        status_values = generate_status_values()
+        for key, value in status_values[status_type].items():
+            print('{}'.format(value), end='')
+
+        print('')
+        print('  0 ', end='')
+        
+        for key, value in status_values['color'].items():
+            if key == 5:
+                print('{}+'.format(key), end='')
+            else:
+                print('{} '.format(key), end='')
+
+        print('')
+        print('  ============')
+        print('')
+    
 
 def print_status(shade, status_type):
     """ Function to print a space of different shades of green (lightest to darkest) """
@@ -90,7 +110,7 @@ def print_status(shade, status_type):
         print('{} '.format(shade), end='')
     else:
         shade = 5 if shade > 5 else shade
-        print('{}'.format(status[status_type].get(shade, space)), end='')
+        print('{} '.format(status[status_type].get(shade, space)), end='')
 
         
 def daterange(start_date , end_date):
@@ -163,7 +183,7 @@ def process_output(output):
 
     first_day = datetime.now()
     last_day = first_day - timedelta(days=365)
-
+    
     return (user_history, first_day, last_day)
 
 
@@ -175,7 +195,7 @@ def print_border(size):
     print('')
 
     
-def print_months_header():
+def print_months_header(verbose):
     """ Print the header to show the months """
 
     prev_month = datetime.now()
@@ -190,7 +210,10 @@ def print_months_header():
     month_order.reverse()
 
     for key in month_order:
-        month_header_str += ('   {}   '.format(key))
+        if verbose:
+            month_header_str += ('       {}   '.format(key))
+        else:
+            month_header_str += ('   {}   '.format(key))
 
     print('')
     print(month_header_str, end='')
@@ -198,7 +221,7 @@ def print_months_header():
 
     return len(month_header_str)
 
-def print_heat_map(user_history, first_day, last_day, status_type):
+def print_heat_map(user_history, first_day, last_day, status_type, verbose):
     """ Display the heat map to the terminal using colors or symbols """
 
     suns = []
@@ -209,8 +232,16 @@ def print_heat_map(user_history, first_day, last_day, status_type):
     fris = []
     sats = []
 
+    # make sure we always start on a Sunday
+    year_of_commits = daterange(last_day, first_day + timedelta(days=1))
+    for date in year_of_commits:
+        if date.strftime('%a') == "Sun":
+            last_day = date
+            break
+    year_of_commits = daterange(last_day, first_day + timedelta(days=1))
+    
     # sort the dates into weeks
-    for x in daterange(last_day, first_day + timedelta(days=1)):
+    for x in year_of_commits:
         cur_day = x.strftime('%Y-%m-%d')
         week_day = x.strftime('%a')
 
@@ -232,22 +263,7 @@ def print_heat_map(user_history, first_day, last_day, status_type):
             print('Something has gone wrong...')
 
 
-    # this is so ugly, figure out a better way to sort the days
-    day_to_start = last_day.strftime('%a')
-    if day_to_start == 'Sun':
-        weeks = [suns, mons, tues, weds, thrs, fris, sats]
-    elif day_to_start == 'Mon':
-        weeks = [mons, tues, weds, thrs, fris, sats, suns]
-    elif day_to_start == 'Tue':
-        weeks = [tues, weds, thrs, fris, sats, suns, mons]
-    elif day_to_start == 'Wed':
-        weeks = [weds, thrs, fris, sats, suns, mons, tues]
-    elif day_to_start == 'Thu':
-        weeks = [thrs, fris, sats, suns, mons, tues, weds]
-    elif day_to_start == 'Fri':
-        weeks = [fris, sats, suns, mons, tues, weds, thrs]
-    else:
-        weeks = [sats, suns, mons, tues, weds, thrs, fris]
+    weeks = [suns, mons, tues, weds, thrs, fris, sats]
 
     # Now print everything
     labels = ['   ', 'Mon', '   ', 'Wed', '   ', 'Fri', '   ']
@@ -263,8 +279,11 @@ def print_heat_map(user_history, first_day, last_day, status_type):
             if day in user_history:
                 print_status(user_history[day], status_type)
             else:
-                print('  ', end='')
-                #print('{} '.format(day.split('-')[2]), end='')
+                if verbose:
+                    print('{} '.format(day.split('-')[2]), end='')
+                else:
+                    print('  ', end='')
+
         print(' ')
 
 
@@ -316,11 +335,11 @@ def heatwave(user_name, git_repo, status_type, verbose, list_committers):
     user_history, first_day, last_day = process_output(output)
 
     # Print everything out
-    header_len = print_months_header()
+    header_len = print_months_header(verbose)
     print_border(header_len)
-    print_heat_map(user_history, first_day, last_day, status_type)
-    #print_graph_key()
+    print_heat_map(user_history, first_day, last_day, status_type, verbose)
     print_border(header_len)
+    print_graph_key(status_type)
     print(' ')
 
     if verbose:
