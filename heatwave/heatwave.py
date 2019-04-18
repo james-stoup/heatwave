@@ -30,7 +30,7 @@ def print_git_users(git_repo):
 
     lines = output.splitlines()
     for line in lines:
-        print('  %s' % line.decode().strip())
+        print('  {}'.format(line.decode().strip()))
     
 
 def print_additional_stats(user_history, git_repo, user_name):
@@ -42,45 +42,39 @@ def print_additional_stats(user_history, git_repo, user_name):
     for key, value in user_history.items():
         total_commits += value
 
-    print('Git Repository : %s' % os.path.basename(os.path.normpath(git_repo)))
-    print('Git Author     : %s' % user_name)
-    print('Total Days     : %s' % total_commit_days)
-    print('Total Commits  : %s' % total_commits)
+    print('Git Repository : {}'.format(os.path.basename(os.path.normpath(git_repo))))
+    print('Git Author     : {}'.format(user_name))
+    print('Total Days     : {}'.format(total_commit_days))
+    print('Total Commits  : {}'.format(total_commits))
     print('')
     
 
 def print_status(shade, status_type):
     """ Function to print a space of different shades of green (lightest to darkest) """
 
-    space = '  '
-    if status_type == 'color':
-        if shade == 1:
-            print(u"\u001b[48;5;47m" + space + u"\u001b[0m", end='')
-        elif shade == 2:
-            print(u"\u001b[48;5;40m" + space + u"\u001b[0m", end='')
-        elif shade == 3:
-            print(u"\u001b[48;5;34m" + space + u"\u001b[0m", end='')
-        elif shade >= 4:        
-            print(u"\u001b[48;5;28m" + space + u"\u001b[0m", end='')
-        else:
-            print(space, end='')
+    space = '   '
+    shade = 4 if shade > 4 else shade
+    status = dict(color={
+                     1: u"\u001b[48;5;47m" + space + u"\u001b[0m",
+                     2: u"\u001b[48;5;40m" + space + u"\u001b[0m",
+                     3: u"\u001b[48;5;34m" + space + u"\u001b[0m",
+                     4: u"\u001b[48;5;28m" + space + u"\u001b[0m",
+                 },
+                 symbol={
+                     1: '..',
+                     2: '--',
+                     3: '**',
+                     4: '##',
+                 })
 
-    elif status_type == 'symbol':
-        if shade == 1:
-            print('..', end='')
-        elif shade == 2:
-            print('--', end='')
-        elif shade == 3:
-            print('**', end='')
-        elif shade >= 4:        
-            print('##', end='')
-        else:
-            print(space, end='')
-            
-    elif status_type == 'number':
-        print('%s ' % shade, end='')
-            
-def daterange(start_date, end_date):
+    # either print the number of commits, or look in the dict
+    if status_type == 'number':
+        print('{} '.format(shade), end='')
+    else:
+        print(status[status_type].get(shade, space), end='')
+
+        
+def daterange(start_date , end_date):
     """ Return a series of dates from start to end  """
 
     for n in range(int ((end_date - start_date).days)):
@@ -107,8 +101,8 @@ def find_commits(user_name, git_repo, since_str, before_str):
                'log',
                '--date=short',
                '--pretty=format:"%ad %an"',
-               '--since="%s"' % since_str,
-               '--before="%s"' % before_str]
+               '--since="{}"'.format(since_str),
+               '--before="{}"'.format(before_str)]
 
     # a series of bash tricks to get what we want
     process_git  = subprocess.Popen(git_cmd, cwd=git_repo, stdout=subprocess.PIPE)
@@ -168,7 +162,7 @@ def print_months_header():
     month_order.reverse()
 
     for key in month_order:
-        month_header_str += ('   %s   ' % key)
+        month_header_str += ('   {}   '.format(key))
 
     print('')
     print(month_header_str, end='')
@@ -212,7 +206,7 @@ def print_heat_map(user_history, first_day, last_day, status_type):
     print_label = 0
 
     for days in weeks:
-        print('%s  ' % labels[print_label], end='')
+        print('{}  '.format(labels[print_label], end=''))
         print_label += 1
 
         for day in days:
@@ -246,7 +240,7 @@ def heatwave(user_name, git_repo, status_type, verbose, list_committers):
 
     dot_git_dir = os.path.join(git_repo, '.git')
     if os.path.isdir(dot_git_dir) is False:
-        print('Invalid Repository Path: %s' % git_repo)
+        print('Invalid Repository Path: {}'.format(git_repo))
         print('Please enter a path to a valid git repository!')
         sys.exit()
 
