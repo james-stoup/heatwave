@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-# A Git Terminal Commit Viewer
-# Author: James Stoup
-# Date: 14 APR 2019
-
+"""
+A Git Terminal Commit Viewer
+Author: James Stoup
+Date: 14 APR 2019
+"""
 
 import sys
 import csv
@@ -15,8 +16,6 @@ import click
 import subprocess
 from datetime import timedelta, date, datetime
 import monthdelta
-
-
 
 
 def print_git_users(git_repo):
@@ -36,6 +35,7 @@ def print_git_users(git_repo):
 
 def print_additional_stats(user_history, git_repo, user_name):
     """ Throw out some additional stats on the data generated """
+
     total_commit_days = len(user_history)
     total_commits = 0
 
@@ -82,6 +82,7 @@ def print_status(shade, status_type):
             
 def daterange(start_date, end_date):
     """ Return a series of dates from start to end  """
+
     for n in range(int ((end_date - start_date).days)):
         yield start_date + timedelta(n)
 
@@ -101,8 +102,6 @@ def generate_dates():
 
 def find_commits(user_name, git_repo, since_str, before_str):
     """ Find the number of commits for a user on each day of the preceeding year  """
-    # the git command to pull out what we need
-    # yeah, I know I could have use the git library, but that just seemed overkill...
 
     git_cmd = ['git',
                'log',
@@ -123,6 +122,7 @@ def find_commits(user_name, git_repo, since_str, before_str):
 
 def process_output(output):
     """ Build a dictionary that ties number of commits to a date  """
+
     user_history = {}
     first_day = ''
     last_day  = ''
@@ -147,6 +147,7 @@ def process_output(output):
 
 def print_border(size):
     """ Print a simple border """
+
     for i in range(0, size):
         print('=', end='')
     print('')
@@ -154,16 +155,17 @@ def print_border(size):
     
 def print_months_header():
     """ Print the header to show the months """
-    # get the months, starting from now and working back (so we know what order to print them in)
+
     prev_month = datetime.now()
     month_order = []
     month_header_str = '    '
+    
+    # get the months, starting from now and working back (so we know what order to print them in)
     for i in range(1, 13):
         month_order.append(prev_month.strftime('%b'))
         prev_month = prev_month + monthdelta.monthdelta(-1)
 
     month_order.reverse()
-
 
     for key in month_order:
         month_header_str += ('   %s   ' % key)
@@ -176,7 +178,7 @@ def print_months_header():
 
 def print_heat_map(user_history, first_day, last_day, status_type):
     """ Display the heat map to the terminal using colors or symbols """
-    # now finally print out the stats
+
     suns = []
     mons = []
     tues = []
