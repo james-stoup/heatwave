@@ -47,12 +47,13 @@ def print_additional_stats(user_history, git_repo, user_name):
     print('Total Days     : {}'.format(total_commit_days))
     print('Total Commits  : {}'.format(total_commits))
     print('')
-    
 
-def print_status(shade, status_type):
-    """ Function to print a space of different shades of green (lightest to darkest) """
+
+
+def generate_status_values():
+    """ Return the color and symbol values that will fill in the days  """
     space = '  '
-    status = dict(
+    status_values = dict(
         color={
             1: u"\u001b[48;5;47m" + space + u"\u001b[0m",
             2: u"\u001b[48;5;40m" + space + u"\u001b[0m",
@@ -67,6 +68,22 @@ def print_status(shade, status_type):
             4: '**',
             5: '##',
         })
+
+    return status_values
+
+
+
+def print_graph_key():
+    status_values = generate_status_values()
+
+    for color in status_values['color']:
+        print(status_values[color])
+
+
+def print_status(shade, status_type):
+    """ Function to print a space of different shades of green (lightest to darkest) """
+    space = '  '
+    status = generate_status_values()
 
     # either print the number of commits, or look in the dict
     if status_type == 'number':
@@ -247,6 +264,7 @@ def print_heat_map(user_history, first_day, last_day, status_type):
                 print_status(user_history[day], status_type)
             else:
                 print('  ', end='')
+                #print('{} '.format(day.split('-')[2]), end='')
         print(' ')
 
 
@@ -301,6 +319,7 @@ def heatwave(user_name, git_repo, status_type, verbose, list_committers):
     header_len = print_months_header()
     print_border(header_len)
     print_heat_map(user_history, first_day, last_day, status_type)
+    #print_graph_key()
     print_border(header_len)
     print(' ')
 
