@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 
 """
+
 A Git Terminal Commit Viewer
-Author: James Stoup
+
+:author James Stoup
+
 Date: 14 APR 2019
+
 """
 
 import sys
@@ -14,30 +18,32 @@ import os
 import click
 import subprocess
 import monthdelta
+import git
+from git import Repo
 from datetime import timedelta, date, datetime
 from collections import defaultdict
 
 
+def init_git(git_repo_path):
+    """ Test to see if we can even connect to the repo given """
+    repo = Repo(git_repo_path)
+    if repo.bare:
+        print('Error - unable to access the git repo')
+        sys.exit()
 
 
-
-def print_git_users(git_repo):
+def print_git_users(git_repo_path):
     """ Print out a list of all users that have committed to the repo """
     print('Git Committers:')
-    git_cmd = ['git',
-               'shortlog',
-               '-s']
-
-    process_git = subprocess.Popen(git_cmd, cwd=git_repo, stdout=subprocess.PIPE)
-    output = process_git.communicate()[0]
-
-    lines = output.splitlines()
+    g = git.Git(git_repo_path)
+    lines = g.shortlog('-s').splitlines()
     users = []
-    
-    for i, line in enumerate(lines):
-        clean_line = line.decode().strip()
-        users.append(" ".join(clean_line.split()).split(' ')[1])
 
+    for line in lines:
+        clean_line = line.strip()
+        users.append(" ".join(line.split()).split(' ', 1)[1])
+
+    users.sort()
     for user in users:
         print('  {}'.format(user))
 
@@ -151,25 +157,20 @@ def generate_dates():
     return (since_str, before_str)
 
 
-def find_commits(user_name, git_repo, since_str, before_str):
+def find_commits(user_name, git_repo_path, since_str, before_str):
     """ Find the number of commits for a user on each day of the preceeding year  """
 
-    git_cmd = ['git',
-               'log',
-               '--date=short',
-               '--pretty=format:"%ad %an"',
-               '--since="{}"'.format(since_str),
-               '--before="{}"'.format(before_str)]
+    g = git.Git(git_repo_path)
+    lines = g.log(
+        '--date=short',
+        '--pretty=format:"%ad %an"',
+        '--since="{}"'.format(since_str),
+        '--before="{}"'.format(before_str)).splitlines()
 
-    # eventually this git command will be replaced with a pure python implementation
-    process_git  = subprocess.Popen(git_cmd, cwd=git_repo, stdout=subprocess.PIPE)
-    output = process_git.communicate()[0]
-
-    lines = output.splitlines()
     cleaned_lines = []
 
-    for i, line in enumerate(lines):
-        cleaned_lines.append(line.decode().strip().replace('"', ''))
+    for line in lines:
+        cleaned_lines.append(line.strip().replace('"', ''))
 
     user_data = defaultdict(list)
 
@@ -275,11 +276,11 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose):
 
 @click.command()
 @click.argument('user-name')
-@click.argument('git-repo', type=click.Path(exists=True), default='.')
+@click.argument('git-repo-path', type=click.Path(exists=True), default='.')
 @click.option('-l', '--list-committers', is_flag=True, help='Lists all the committers for a git repo')
 @click.option('--status-type', type=click.Choice(['color', 'symbol', 'number']), default='color', help = 'Choose how to visualize the data')
 @click.option('-v', '--verbose', is_flag=True, help='Prints additional information')
-def heatwave(user_name, git_repo, status_type, verbose, list_committers):
+def heatwave(user_name, git_repo_path, status_type, verbose, list_committers):
     """ 
     Visualize your git history on the terminal!
 
@@ -299,24 +300,24 @@ def heatwave(user_name, git_repo, status_type, verbose, list_committers):
 
     """
 
-    dot_git_dir = os.path.join(git_repo, '.git')
+    dot_git_dir = os.path.join(git_repo_path, '.git')
     if os.path.isdir(dot_git_dir) is False:
-        print('Invalid Repository Path: {}'.format(git_repo))
+        print('Invalid Repository Path: {}'.format(git_repo_path))
         print('Please enter a path to a valid git repository!')
         sys.exit()
 
+    # everything else depends on git working, so hop to it
+    init_git(git_repo_path)
+        
     if list_committers:
-        print_git_users(git_repo)
+        print_git_users(git_repo_path)
         sys.exit()
         
     # Get the start and end dates corresponding to exactly a year from today
     since_str, before_str = generate_dates()
 
-    # Use git to determine what commits they made on which days
-    #output = find_commits(user_name, git_repo, since_str, before_str)
-
     # Clean up the output so it can be used
-    user_history, first_day, last_day = find_commits(user_name, git_repo, since_str, before_str)
+    user_history, first_day, last_day = find_commits(user_name, git_repo_path, since_str, before_str)
 
     # Print everything out
     header_len = print_months_header(verbose)
@@ -327,7 +328,7 @@ def heatwave(user_name, git_repo, status_type, verbose, list_committers):
     print(' ')
 
     if verbose:
-        print_additional_stats(user_history, git_repo, user_name)
+        print_additional_stats(user_history, git_repo_path, user_name)
 
         
 if __name__ == '__main__':
