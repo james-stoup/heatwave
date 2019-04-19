@@ -81,7 +81,6 @@ def print_graph_key(status_type):
         print('  ==   KEY  ==')
         print('    ', end='')
         
-        
         status_values = generate_status_values()
         for key, value in status_values[status_type].items():
             print('{}'.format(value), end='')
@@ -107,7 +106,9 @@ def print_status(shade, status_type):
 
     # either print the number of commits, or look in the dict
     if status_type == 'number':
-        print('{} '.format(shade), end='')
+        if shade < 10:
+            shade = '0{}'.format(shade)
+        print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m ", end='')
     else:
         shade = 5 if shade > 5 else shade
         print('{} '.format(status[status_type].get(shade, space)), end='')
