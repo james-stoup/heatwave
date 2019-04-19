@@ -16,6 +16,7 @@ import click
 import subprocess
 from datetime import timedelta, date, datetime
 import monthdelta
+from collections import defaultdict
 
 
 def print_git_users(git_repo):
@@ -154,6 +155,7 @@ def find_commits(user_name, git_repo, since_str, before_str):
     # a series of bash tricks to get what we want
     # so this is super hacky and really needs to be reworked
     process_git  = subprocess.Popen(git_cmd, cwd=git_repo, stdout=subprocess.PIPE)
+
     process_sed  = subprocess.Popen(sed_cmd, stdin=process_git.stdout, stdout=subprocess.PIPE)
     process_tr   = subprocess.Popen(tr_cmd, stdin=process_sed.stdout, stdout=subprocess.PIPE)
     process_sort = subprocess.Popen(['sort'], stdin=process_tr.stdout, stdout=subprocess.PIPE)
@@ -240,31 +242,17 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose):
             last_day = date
             break
     year_of_commits = daterange(last_day, first_day + timedelta(days=1))
-    
+
     # sort the dates into weeks
+    week_days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    days = defaultdict(list)
+
     for x in year_of_commits:
-        cur_day = x.strftime('%Y-%m-%d')
-        week_day = x.strftime('%a')
+        cur_day = x.strftime('%Y-%m-%d')   # format of the git commits
+        week_day = x.strftime('%a')        # format to tell the day of the week
+        days[week_day].append(cur_day)
 
-        if week_day == 'Sun':
-            suns.append(cur_day)
-        elif week_day == 'Mon':
-            mons.append(cur_day)
-        elif week_day == 'Tue':
-            tues.append(cur_day)
-        elif week_day == 'Wed':
-            weds.append(cur_day)
-        elif week_day == 'Thu':
-            thrs.append(cur_day)
-        elif week_day == 'Fri':
-            fris.append(cur_day)
-        elif week_day == 'Sat':
-            sats.append(cur_day)
-        else:
-            print('Something has gone wrong...')
-
-
-    weeks = [suns, mons, tues, weds, thrs, fris, sats]
+    weeks = [days[day] for day in week_days]
 
     # Now print everything
     labels = ['   ', 'Mon', '   ', 'Wed', '   ', 'Fri', '   ']
@@ -280,11 +268,12 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose):
             if day in user_history:
                 print_status(user_history[day], status_type)
             else:
+                # verbose mode will print the day of the month
                 if verbose:
                     print('{} '.format(day.split('-')[2]), end='')
                 else:
+                    # otherwise just print an empty space (might change later)
                     print('  ', end='')
-
         print(' ')
 
 
