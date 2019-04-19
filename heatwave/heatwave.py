@@ -12,26 +12,36 @@ import optparse
 import time
 import os
 import click
-
 import subprocess
-from datetime import timedelta, date, datetime
 import monthdelta
+from datetime import timedelta, date, datetime
 from collections import defaultdict
 
 
+
+
+
 def print_git_users(git_repo):
+    """ Print out a list of all users that have committed to the repo """
+    print('Git Committers:')
     git_cmd = ['git',
                'shortlog',
                '-s']
 
     process_git = subprocess.Popen(git_cmd, cwd=git_repo, stdout=subprocess.PIPE)
-    process_cut = subprocess.Popen(['cut', '-c8-'], stdin=process_git.stdout, stdout=subprocess.PIPE)
-    process_sort = subprocess.Popen(['sort'], stdin=process_cut.stdout, stdout=subprocess.PIPE)
-    output = process_sort.communicate()[0]
+    output = process_git.communicate()[0]
 
     lines = output.splitlines()
-    for line in lines:
-        print('  {}'.format(line.decode().strip()))
+    users = []
+    
+    for i, line in enumerate(lines):
+        clean_line = line.decode().strip()
+        users.append(" ".join(clean_line.split()).split(' ')[1])
+
+    for user in users:
+        print('  {}'.format(user))
+
+    print('')
     
 
 def print_additional_stats(user_history, git_repo, user_name):
@@ -151,68 +161,36 @@ def find_commits(user_name, git_repo, since_str, before_str):
                '--since="{}"'.format(since_str),
                '--before="{}"'.format(before_str)]
 
-    sed_cmd = ['sed',
-               's/\([A-Za-z]\)-\([A-Za-z]\)/\1 \2/g']
-
-    tr_cmd = ['tr',
-              '[:upper:]',
-              '[:lower:]']
-    
-    # a series of bash tricks to get what we want
-    # so this is super hacky and really needs to be reworked
+    # eventually this git command will be replaced with a pure python implementation
     process_git  = subprocess.Popen(git_cmd, cwd=git_repo, stdout=subprocess.PIPE)
     output = process_git.communicate()[0]
-    lines = output.splitlines()
 
+    lines = output.splitlines()
     cleaned_lines = []
+
     for i, line in enumerate(lines):
         cleaned_lines.append(line.decode().strip().replace('"', ''))
 
-    user_history = defaultdict(list)
-        
+    user_data = defaultdict(list)
+
+    # get the commits per day for the user in question
     for cl in cleaned_lines:
         commit_date = (cl.split(' ', 1)[0])
         commit_user = (cl.split(' ', 1)[1])
         if user_name.lower() in commit_user.lower():
-            user_history[commit_date].append(commit_user)
-
-    for k, v in user_history.items():
-        print('{} - {} - {}'.format(k, v, len(v)))
-
-    # need to sort this list
-    sys.exit()
-    
-    process_sed  = subprocess.Popen(sed_cmd, stdin=process_git.stdout, stdout=subprocess.PIPE)
-    process_tr   = subprocess.Popen(tr_cmd, stdin=process_sed.stdout, stdout=subprocess.PIPE)
-    process_sort = subprocess.Popen(['sort'], stdin=process_tr.stdout, stdout=subprocess.PIPE)
-    process_uniq = subprocess.Popen(['uniq', '-c'], stdin=process_sort.stdout, stdout=subprocess.PIPE)
-    process_grep = subprocess.Popen(['grep', '-i', user_name], stdin=process_uniq.stdout, stdout=subprocess.PIPE)
-
-    return output
-
-
-def process_output(output):
-    """ Build a dictionary that ties number of commits to a date  """
+            user_data[commit_date].append(commit_user)
 
     user_history = {}
-    first_day = ''
-    last_day  = ''
-    lines = output.splitlines()
-
-    for i, line in enumerate(lines):
-        # this will turn each line into a format that can be easily used
-        cur_line   = line.decode().strip()
-        clean_line = cur_line.replace('"', '')
-        count, rest_of_str = clean_line.split(' ', 1)
-        commit_date, commit_name = rest_of_str.split(' ', 1)
-
-        # build the dictionary
-        user_history.update({commit_date : int(count)})
+    
+    # need to sort this list
+    # now save number of commits per day
+    for k, v in user_data.items():
+        user_history[k] = len(v)
 
     first_day = datetime.now()
     last_day = first_day - timedelta(days=365)
-    
-    return (user_history, first_day, last_day)
+
+    return user_history, first_day, last_day
 
 
 def print_border(size):
@@ -328,7 +306,6 @@ def heatwave(user_name, git_repo, status_type, verbose, list_committers):
         sys.exit()
 
     if list_committers:
-        print('Git Committers:')
         print_git_users(git_repo)
         sys.exit()
         
@@ -336,10 +313,10 @@ def heatwave(user_name, git_repo, status_type, verbose, list_committers):
     since_str, before_str = generate_dates()
 
     # Use git to determine what commits they made on which days
-    output = find_commits(user_name, git_repo, since_str, before_str)
+    #output = find_commits(user_name, git_repo, since_str, before_str)
 
     # Clean up the output so it can be used
-    user_history, first_day, last_day = process_output(output)
+    user_history, first_day, last_day = find_commits(user_name, git_repo, since_str, before_str)
 
     # Print everything out
     header_len = print_months_header(verbose)
