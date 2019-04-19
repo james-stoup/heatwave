@@ -100,7 +100,7 @@ def print_graph_key(status_type):
         print('')
     
 
-def print_status(shade, status_type):
+def print_status(shade, status_type, verbose):
     """ Function to print a space of different shades of green (lightest to darkest) """
     space = '  '
     status = generate_status_values()
@@ -108,11 +108,17 @@ def print_status(shade, status_type):
     # either print the number of commits, or look in the dict
     if status_type == 'number':
         if shade < 10:
-            shade = '0{}'.format(shade)
-        print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m ", end='')
+            shade = ' {}'.format(shade)
+            if verbose:
+                print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m ", end='')
+            else:
+                print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m", end='')
     else:
         shade = 5 if shade > 5 else shade
-        print('{} '.format(status[status_type].get(shade, space)), end='')
+        if verbose:
+            print('{} '.format(status[status_type].get(shade, space)), end='')
+        else:
+            print('{}'.format(status[status_type].get(shade, space)), end='')
 
         
 def daterange(start_date , end_date):
@@ -277,7 +283,7 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose):
         # print each commit day in the chosen format
         for day in days:
             if day in user_history:
-                print_status(user_history[day], status_type)
+                print_status(user_history[day], status_type, verbose)
             else:
                 # verbose mode will print the day of the month
                 if verbose:
