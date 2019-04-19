@@ -155,13 +155,32 @@ def find_commits(user_name, git_repo, since_str, before_str):
     # a series of bash tricks to get what we want
     # so this is super hacky and really needs to be reworked
     process_git  = subprocess.Popen(git_cmd, cwd=git_repo, stdout=subprocess.PIPE)
+    output = process_git.communicate()[0]
+    lines = output.splitlines()
 
+    cleaned_lines = []
+    for i, line in enumerate(lines):
+        cleaned_lines.append(line.decode().strip().replace('"', ''))
+
+    user_history = defaultdict(list)
+        
+    for cl in cleaned_lines:
+        commit_date = (cl.split(' ', 1)[0])
+        commit_user = (cl.split(' ', 1)[1])
+        if user_name.lower() in commit_user.lower():
+            user_history[commit_date].append(commit_user)
+
+    for k, v in user_history.items():
+        print('{} - {} - {}'.format(k, v, len(v)))
+
+    # need to sort this list
+    sys.exit()
+    
     process_sed  = subprocess.Popen(sed_cmd, stdin=process_git.stdout, stdout=subprocess.PIPE)
     process_tr   = subprocess.Popen(tr_cmd, stdin=process_sed.stdout, stdout=subprocess.PIPE)
     process_sort = subprocess.Popen(['sort'], stdin=process_tr.stdout, stdout=subprocess.PIPE)
     process_uniq = subprocess.Popen(['uniq', '-c'], stdin=process_sort.stdout, stdout=subprocess.PIPE)
     process_grep = subprocess.Popen(['grep', '-i', user_name], stdin=process_uniq.stdout, stdout=subprocess.PIPE)
-    output = process_grep.communicate()[0]
 
     return output
 
@@ -226,14 +245,6 @@ def print_months_header(verbose):
 
 def print_heat_map(user_history, first_day, last_day, status_type, verbose):
     """ Display the heat map to the terminal using colors or symbols """
-
-    suns = []
-    mons = []
-    tues = []
-    weds = []
-    thrs = []
-    fris = []
-    sats = []
 
     # make sure we always start on a Sunday
     year_of_commits = daterange(last_day, first_day + timedelta(days=1))
