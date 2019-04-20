@@ -37,15 +37,16 @@ def print_git_users(git_repo_path):
     print('Git Committers:')
     g = git.Git(git_repo_path)
     lines = g.shortlog('-s').splitlines()
-    users = []
+    users = {}
 
     for line in lines:
         clean_line = line.strip()
-        users.append(" ".join(line.split()).split(' ', 1)[1])
+        commits = (" ".join(line.split()).split(' ', 1))[0]
+        author = (" ".join(line.split()).split(' ', 1))[1]
+        users[author] = commits
 
-    users.sort()
-    for user in users:
-        print('  {}'.format(user))
+    for key, val in users.items():
+        print('     {:>5} - {}'.format(val, key))
 
     print('')
     
@@ -144,21 +145,10 @@ def daterange(start_date , end_date):
         yield start_date + timedelta(n)
 
 
-def generate_dates():
-    """ Return the today's date and the day exactly a year previous  """
-
-    # Get a year's worth of data, working back from today
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=365)
-
+def find_commits(user_name, git_repo_path, end_date, start_date, all_users):
+    """ Find the number of commits for a user on each day of the preceeding year  """
     since_str  = start_date.strftime("%d %b %Y")
     before_str = end_date.strftime("%d %b %Y")
-
-    return (since_str, before_str)
-
-
-def find_commits(user_name, git_repo_path, since_str, before_str):
-    """ Find the number of commits for a user on each day of the preceeding year  """
 
     g = git.Git(git_repo_path)
     lines = g.log(
@@ -178,12 +168,14 @@ def find_commits(user_name, git_repo_path, since_str, before_str):
     for cl in cleaned_lines:
         commit_date = (cl.split(' ', 1)[0])
         commit_user = (cl.split(' ', 1)[1])
-        if user_name.lower() in commit_user.lower():
+        if all_users is True:
             user_data[commit_date].append(commit_user)
+        else:
+            if user_name.lower() in commit_user.lower():
+                user_data[commit_date].append(commit_user)
 
     user_history = {}
     
-    # need to sort this list
     # now save number of commits per day
     for k, v in user_data.items():
         user_history[k] = len(v)
@@ -191,14 +183,15 @@ def find_commits(user_name, git_repo_path, since_str, before_str):
     first_day = datetime.now()
     last_day = first_day - timedelta(days=365)
 
-    return user_history, first_day, last_day
+    return user_history
 
 
-def print_border(size):
+def print_border(size, msg=''):
     """ Print a simple border """
 
     for i in range(0, size):
         print('=', end='')
+    print(msg, end='')
     print('')
 
     
@@ -222,7 +215,6 @@ def print_months_header(verbose):
         else:
             month_header_str += ('   {}   '.format(key))
 
-    print('')
     print(month_header_str, end='')
     print('')
 
@@ -257,7 +249,6 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose):
     for days in weeks:
         # print the mon/wed/fri labels
         print('{}  '.format(labels[print_label]), end='')
-        print_label += 1
 
         # print each commit day in the chosen format
         for day in days:
@@ -270,17 +261,21 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose):
                 else:
                     # otherwise just print an empty space (might change later)
                     print('  ', end='')
+
+        print_label += 1
         print(' ')
 
 
 
 @click.command()
-@click.argument('user-name')
 @click.argument('git-repo-path', type=click.Path(exists=True), default='.')
+@click.argument('user-name', required=False)
 @click.option('-l', '--list-committers', is_flag=True, help='Lists all the committers for a git repo')
+@click.option('-y', '--years', default=1, help='Print more than one year')
+@click.option('-a', '--all-users', is_flag=True, help='Print heat map for all users, not just a single user')
 @click.option('--status-type', type=click.Choice(['color', 'symbol', 'number']), default='color', help = 'Choose how to visualize the data')
 @click.option('-v', '--verbose', is_flag=True, help='Prints additional information')
-def heatwave(user_name, git_repo_path, status_type, verbose, list_committers):
+def heatwave(user_name, git_repo_path, list_committers, years, all_users, status_type, verbose):
     """ 
     Visualize your git history on the terminal!
 
@@ -300,30 +295,43 @@ def heatwave(user_name, git_repo_path, status_type, verbose, list_committers):
 
     """
 
+    # Error checking
     dot_git_dir = os.path.join(git_repo_path, '.git')
     if os.path.isdir(dot_git_dir) is False:
         print('Invalid Repository Path: {}'.format(git_repo_path))
         print('Please enter a path to a valid git repository!')
         sys.exit()
 
+    if all_users is False and list_committers is False and user_name is None:
+        print('Must supply a USER NAME if the -l or -a flags are not used')
+        sys.exit()
+        
     # everything else depends on git working, so hop to it
     init_git(git_repo_path)
         
     if list_committers:
         print_git_users(git_repo_path)
         sys.exit()
+
+    # loop through the years
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=365)  # Get a year's worth of data, working back from today
+    for i in range(years):
+        print('')
+        years_label = '\t{} - {}'.format(start_date.strftime('%Y'), end_date.strftime('%Y'))
+        user_history = find_commits(user_name, git_repo_path, end_date, start_date, all_users)
+
+        # Print everything out
+        header_len = print_months_header(verbose)
+        print_border(header_len, years_label)
+        print_heat_map(user_history, end_date, start_date, status_type, verbose)
+        print_border(header_len)
+        print('')
         
-    # Get the start and end dates corresponding to exactly a year from today
-    since_str, before_str = generate_dates()
+        end_date = start_date
+        start_date = end_date - timedelta(days=365)
 
-    # Clean up the output so it can be used
-    user_history, first_day, last_day = find_commits(user_name, git_repo_path, since_str, before_str)
 
-    # Print everything out
-    header_len = print_months_header(verbose)
-    print_border(header_len)
-    print_heat_map(user_history, first_day, last_day, status_type, verbose)
-    print_border(header_len)
     print_graph_key(status_type)
     print(' ')
 
