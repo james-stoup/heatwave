@@ -5,25 +5,37 @@ A tool for displaying a visual representation of your git history. This generate
 
 ## Requirements
 
-To run this you will need the following modules from pip:
+To install all neede requirements use pip like so:
 
-  * click
-  * monthdelta
-  
+```pip install -r requirements.txt'```
+
   
 ## Usage
 
-To view basic status on a user do this:
+View repo stats for all committers:
+```./heatwave.py /path/to/my/repo -a```
 
+
+List everyone who committed to this repo:
+```./heatwave.py /path/to/my/repo -l```
+
+
+View stats on a particular committer:
 ```./heatwave.py 'James Stoup' /path/to/my/repo```
 
 
-To view more stats on the user:
+View detailed stats on a particular committer:
+```./heatwave.py -v 'James Stoup' /path/to/my/repo```
 
-```./heatwave.py --verbose 'James Stoup' /path/to/my/repo```
+
+View number of commits instead of color:
+```./heatwave.py --status-type number 'James Stoup' /path/to/my/repo```
 
 
-To view status with symbols instead of color:
+View several years worth of commits:
+```./heatwave.py 'James Stoup' /path/to/my/repo -y 3```
 
-```./heatwave.py --status-type symbol 'James Stoup' /path/to/my/repo```
+
+View detailed stats on everyone going back 10 years
+```./heatwave.py /path/to/my/repo -v -a -y 10```
 

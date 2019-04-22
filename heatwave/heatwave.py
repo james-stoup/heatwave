@@ -56,6 +56,9 @@ def print_git_users(git_repo_path):
 def print_additional_stats(user_history, git_repo, user_name):
     """ Throw out some additional stats on the data generated """
 
+    if user_name is None:
+        user_name = "All"
+
     total_commit_days = len(user_history)
     total_commits = 0
 
@@ -331,6 +334,7 @@ def heatwave(
     start_date = end_date - timedelta(
         days=365
     )  # Get a year's worth of data, working back from today
+
     for i in range(years):
         print("")
         years_label = "\t{} - {}".format(
@@ -350,11 +354,12 @@ def heatwave(
         end_date = start_date
         start_date = end_date - timedelta(days=365)
 
-    print_graph_key(status_type)
-    print(" ")
+        if verbose:
+            print_additional_stats(user_history, git_repo_path, user_name)
 
-    if verbose:
-        print_additional_stats(user_history, git_repo_path, user_name)
+    print_graph_key(status_type)
+
+    print(" ")
 
 
 if __name__ == "__main__":
