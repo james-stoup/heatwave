@@ -1,2 +1,13 @@
-monthdelta>=0.9.0
-click>=7.0
+appdirs==1.4.3
+attrs==19.1.0
+black==19.3b0
+black-magic==0.0.12
+black-percentage-tester==0.0.3
+Click==7.0
+colorama==0.4.1
+gitdb2==2.0.5
+GitPython==2.1.11
+isort==4.3.17
+MonthDelta==0.9.1
+smmap2==2.0.5
+toml==0.10.0

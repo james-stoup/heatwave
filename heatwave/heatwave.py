@@ -1,41 +1,63 @@
 #!/usr/bin/env python
 
-"""
-A Git Terminal Commit Viewer
-Author: James Stoup
-Date: 14 APR 2019
+
 """
 
-import sys
+A Git Terminal Commit Viewer
+
+:author James Stoup
+
+Date: 14 APR 2019
+
+"""
+
 import csv
 import optparse
-import time
 import os
-import click
-
 import subprocess
-from datetime import timedelta, date, datetime
-import monthdelta
+import sys
+import time
 from collections import defaultdict
+from datetime import date, datetime, timedelta
+
+import click
+import git
+import monthdelta
+from git import Repo
 
 
-def print_git_users(git_repo):
-    git_cmd = ['git',
-               'shortlog',
-               '-s']
+def init_git(git_repo_path):
+    """ Test to see if we can even connect to the repo given """
+    repo = Repo(git_repo_path)
+    if repo.bare:
+        print("Error - unable to access the git repo")
+        sys.exit()
 
-    process_git = subprocess.Popen(git_cmd, cwd=git_repo, stdout=subprocess.PIPE)
-    process_cut = subprocess.Popen(['cut', '-c8-'], stdin=process_git.stdout, stdout=subprocess.PIPE)
-    process_sort = subprocess.Popen(['sort'], stdin=process_cut.stdout, stdout=subprocess.PIPE)
-    output = process_sort.communicate()[0]
 
-    lines = output.splitlines()
+def print_git_users(git_repo_path):
+    """ Print out a list of all users that have committed to the repo """
+    print("Git Committers:")
+    g = git.Git(git_repo_path)
+    lines = g.shortlog("-s").splitlines()
+    users = {}
+
     for line in lines:
-        print('  {}'.format(line.decode().strip()))
-    
+        clean_line = line.strip()
+        commits = (" ".join(line.split()).split(" ", 1))[0]
+        author = (" ".join(line.split()).split(" ", 1))[1]
+        users[author] = commits
+
+    for key, val in users.items():
+        print("     {:>5} - {}".format(val, key))
+
+    print("")
+
 
 def print_additional_stats(user_history, git_repo, user_name):
     """ Throw out some additional stats on the data generated """
+
+    if user_name is None:
+        user_name = "All"
 
     total_commit_days = len(user_history)
     total_commits = 0
@@ -43,231 +65,190 @@ def print_additional_stats(user_history, git_repo, user_name):
     for key, value in user_history.items():
         total_commits += value
 
-    print('Git Repository : {}'.format(os.path.basename(os.path.realpath(git_repo))))
-    print('Git Author     : {}'.format(user_name))
-    print('Total Days     : {}'.format(total_commit_days))
-    print('Total Commits  : {}'.format(total_commits))
-    print('')
-
+    print("Git Repository : {}".format(os.path.basename(os.path.realpath(git_repo))))
+    print("Git Author     : {}".format(user_name))
+    print("Total Days     : {}".format(total_commit_days))
+    print("Total Commits  : {}".format(total_commits))
+    print("")
 
 
 def generate_status_values():
     """ Return the color and symbol values that will fill in the days  """
-    space = '  '
+    space = "  "
     status_values = dict(
         color={
             1: u"\u001b[48;5;47m" + space + u"\u001b[0m",
             2: u"\u001b[48;5;40m" + space + u"\u001b[0m",
             3: u"\u001b[48;5;34m" + space + u"\u001b[0m",
             4: u"\u001b[48;5;28m" + space + u"\u001b[0m",
-            5: u"\u001b[48;5;22m" + space + u"\u001b[0m"
+            5: u"\u001b[48;5;22m" + space + u"\u001b[0m",
         },
-        symbol={
-            1: '..',
-            2: '--',
-            3: '~~',
-            4: '**',
-            5: '##',
-        })
+        symbol={1: "..", 2: "--", 3: "~~", 4: "**", 5: "##"},
+    )
 
     return status_values
-
 
 
 def print_graph_key(status_type):
     """ Print out a key so the colors make sense """
 
-    if status_type != 'number':
+    if status_type != "number":
 
-        print('  ==   KEY  ==')
-        print('    ', end='')
-        
+        print("  ==   KEY  ==")
+        print("    ", end="")
+
         status_values = generate_status_values()
         for key, value in status_values[status_type].items():
-            print('{}'.format(value), end='')
+            print("{}".format(value), end="")
 
-        print('')
-        print('  0 ', end='')
-        
-        for key, value in status_values['color'].items():
+        print("")
+        print("  0 ", end="")
+
+        for key, value in status_values["color"].items():
             if key == 5:
-                print('{}+'.format(key), end='')
+                print("{}+".format(key), end="")
             else:
-                print('{} '.format(key), end='')
+                print("{} ".format(key), end="")
 
-        print('')
-        print('  ============')
-        print('')
-    
+        print("")
+        print("  ============")
+        print("")
+
 
 def print_status(shade, status_type, verbose):
     """ Function to print a space of different shades of green (lightest to darkest) """
-    space = '  '
+    space = "  "
     status = generate_status_values()
 
     # either print the number of commits, or look in the dict
-    if status_type == 'number':
+    if status_type == "number":
         if shade < 10:
-            shade = ' {}'.format(shade)
+            shade = " {}".format(shade)
             if verbose:
-                print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m ", end='')
+                print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m ", end="")
             else:
-                print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m", end='')
+                print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m", end="")
     else:
         shade = 5 if shade > 5 else shade
         if verbose:
-            print('{} '.format(status[status_type].get(shade, space)), end='')
+            print("{} ".format(status[status_type].get(shade, space)), end="")
         else:
-            print('{}'.format(status[status_type].get(shade, space)), end='')
+            print("{}".format(status[status_type].get(shade, space)), end="")
 
-        
-def daterange(start_date , end_date):
+
+def daterange(start_date, end_date):
     """ Return a series of dates from start to end  """
 
-    for n in range(int ((end_date - start_date).days)):
+    for n in range(int((end_date - start_date).days)):
         yield start_date + timedelta(n)
 
 
-def generate_dates():
-    """ Return the today's date and the day exactly a year previous  """
-
-    # Get a year's worth of data, working back from today
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=365)
-
-    since_str  = start_date.strftime("%d %b %Y")
+def find_commits(user_name, git_repo_path, end_date, start_date, all_users):
+    """ Find the number of commits for a user on each day of the preceeding year  """
+    since_str = start_date.strftime("%d %b %Y")
     before_str = end_date.strftime("%d %b %Y")
 
-    return (since_str, before_str)
+    g = git.Git(git_repo_path)
+    lines = g.log(
+        "--date=short",
+        '--pretty=format:"%ad %an"',
+        '--since="{}"'.format(since_str),
+        '--before="{}"'.format(before_str),
+    ).splitlines()
 
+    cleaned_lines = []
 
-def find_commits(user_name, git_repo, since_str, before_str):
-    """ Find the number of commits for a user on each day of the preceeding year  """
+    for line in lines:
+        cleaned_lines.append(line.strip().replace('"', ""))
 
-    git_cmd = ['git',
-               'log',
-               '--date=short',
-               '--pretty=format:"%ad %an"',
-               '--since="{}"'.format(since_str),
-               '--before="{}"'.format(before_str)]
+    user_data = defaultdict(list)
 
-    sed_cmd = ['sed',
-               's/\([A-Za-z]\)-\([A-Za-z]\)/\1 \2/g']
-
-    tr_cmd = ['tr',
-              '[:upper:]',
-              '[:lower:]']
-    
-    # a series of bash tricks to get what we want
-    # so this is super hacky and really needs to be reworked
-    process_git  = subprocess.Popen(git_cmd, cwd=git_repo, stdout=subprocess.PIPE)
-
-    process_sed  = subprocess.Popen(sed_cmd, stdin=process_git.stdout, stdout=subprocess.PIPE)
-    process_tr   = subprocess.Popen(tr_cmd, stdin=process_sed.stdout, stdout=subprocess.PIPE)
-    process_sort = subprocess.Popen(['sort'], stdin=process_tr.stdout, stdout=subprocess.PIPE)
-    process_uniq = subprocess.Popen(['uniq', '-c'], stdin=process_sort.stdout, stdout=subprocess.PIPE)
-    process_grep = subprocess.Popen(['grep', '-i', user_name], stdin=process_uniq.stdout, stdout=subprocess.PIPE)
-    output = process_grep.communicate()[0]
-
-    return output
-
-
-def process_output(output):
-    """ Build a dictionary that ties number of commits to a date  """
+    # get the commits per day for the user in question
+    for cl in cleaned_lines:
+        commit_date = cl.split(" ", 1)[0]
+        commit_user = cl.split(" ", 1)[1]
+        if all_users is True:
+            user_data[commit_date].append(commit_user)
+        else:
+            if user_name.lower() in commit_user.lower():
+                user_data[commit_date].append(commit_user)
 
     user_history = {}
-    first_day = ''
-    last_day  = ''
-    lines = output.splitlines()
 
-    for i, line in enumerate(lines):
-        # this will turn each line into a format that can be easily used
-        cur_line   = line.decode().strip()
-        clean_line = cur_line.replace('"', '')
-        count, rest_of_str = clean_line.split(' ', 1)
-        commit_date, commit_name = rest_of_str.split(' ', 1)
-
-        # build the dictionary
-        user_history.update({commit_date : int(count)})
+    # now save number of commits per day
+    for k, v in user_data.items():
+        user_history[k] = len(v)
 
     first_day = datetime.now()
     last_day = first_day - timedelta(days=365)
-    
-    return (user_history, first_day, last_day)
+
+    return user_history
 
 
-def print_border(size):
+def print_border(size, msg=""):
     """ Print a simple border """
 
     for i in range(0, size):
-        print('=', end='')
-    print('')
+        print("=", end="")
+    print(msg, end="")
+    print("")
 
-    
+
 def print_months_header(verbose):
     """ Print the header to show the months """
 
     prev_month = datetime.now()
     month_order = []
-    month_header_str = '    '
-    
+    month_header_str = "    "
+
     # get the months, starting from now and working back (so we know what order to print them in)
     for i in range(1, 13):
-        month_order.append(prev_month.strftime('%b'))
+        month_order.append(prev_month.strftime("%b"))
         prev_month = prev_month + monthdelta.monthdelta(-1)
 
     month_order.reverse()
 
     for key in month_order:
         if verbose:
-            month_header_str += ('       {}   '.format(key))
+            month_header_str += "       {}   ".format(key)
         else:
-            month_header_str += ('   {}   '.format(key))
+            month_header_str += "   {}   ".format(key)
 
-    print('')
-    print(month_header_str, end='')
-    print('')
+    print(month_header_str, end="")
+    print("")
 
     return len(month_header_str)
+
 
 def print_heat_map(user_history, first_day, last_day, status_type, verbose):
     """ Display the heat map to the terminal using colors or symbols """
 
-    suns = []
-    mons = []
-    tues = []
-    weds = []
-    thrs = []
-    fris = []
-    sats = []
-
     # make sure we always start on a Sunday
     year_of_commits = daterange(last_day, first_day + timedelta(days=1))
     for date in year_of_commits:
-        if date.strftime('%a') == "Sun":
+        if date.strftime("%a") == "Sun":
             last_day = date
             break
     year_of_commits = daterange(last_day, first_day + timedelta(days=1))
 
     # sort the dates into weeks
-    week_days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    week_days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     days = defaultdict(list)
 
     for x in year_of_commits:
-        cur_day = x.strftime('%Y-%m-%d')   # format of the git commits
-        week_day = x.strftime('%a')        # format to tell the day of the week
+        cur_day = x.strftime("%Y-%m-%d")  # format of the git commits
+        week_day = x.strftime("%a")  # format to tell the day of the week
         days[week_day].append(cur_day)
 
     weeks = [days[day] for day in week_days]
 
     # Now print everything
-    labels = ['   ', 'Mon', '   ', 'Wed', '   ', 'Fri', '   ']
+    labels = ["   ", "Mon", "   ", "Wed", "   ", "Fri", "   "]
     print_label = 0
 
     for days in weeks:
         # print the mon/wed/fri labels
-        print('{}  '.format(labels[print_label]), end='')
-        print_label += 1
+        print("{}  ".format(labels[print_label]), end="")
 
         # print each commit day in the chosen format
         for day in days:
@@ -276,21 +257,41 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose):
             else:
                 # verbose mode will print the day of the month
                 if verbose:
-                    print('{} '.format(day.split('-')[2]), end='')
+                    print("{} ".format(day.split("-")[2]), end="")
                 else:
                     # otherwise just print an empty space (might change later)
-                    print('  ', end='')
-        print(' ')
+                    print("  ", end="")
 
+        print_label += 1
+        print(" ")
 
 
 @click.command()
-@click.argument('user-name')
-@click.argument('git-repo', type=click.Path(exists=True), default='.')
-@click.option('-l', '--list-committers', is_flag=True, help='Lists all the committers for a git repo')
-@click.option('--status-type', type=click.Choice(['color', 'symbol', 'number']), default='color', help = 'Choose how to visualize the data')
-@click.option('-v', '--verbose', is_flag=True, help='Prints additional information')
-def heatwave(user_name, git_repo, status_type, verbose, list_committers):
+@click.argument("git-repo-path", type=click.Path(exists=True), default=".")
+@click.argument("user-name", required=False)
+@click.option(
+    "-l",
+    "--list-committers",
+    is_flag=True,
+    help="Lists all the committers for a git repo",
+)
+@click.option("-y", "--years", default=1, help="Print more than one year")
+@click.option(
+    "-a",
+    "--all-users",
+    is_flag=True,
+    help="Print heat map for all users, not just a single user",
+)
+@click.option(
+    "--status-type",
+    type=click.Choice(["color", "symbol", "number"]),
+    default="color",
+    help="Choose how to visualize the data",
+)
+@click.option("-v", "--verbose", is_flag=True, help="Prints additional information")
+def heatwave(
+    user_name, git_repo_path, list_committers, years, all_users, status_type, verbose
+):
     """ 
     Visualize your git history on the terminal!
 
@@ -310,37 +311,56 @@ def heatwave(user_name, git_repo, status_type, verbose, list_committers):
 
     """
 
-    dot_git_dir = os.path.join(git_repo, '.git')
+    # Error checking
+    dot_git_dir = os.path.join(git_repo_path, ".git")
     if os.path.isdir(dot_git_dir) is False:
-        print('Invalid Repository Path: {}'.format(git_repo))
-        print('Please enter a path to a valid git repository!')
+        print("Invalid Repository Path: {}".format(git_repo_path))
+        print("Please enter a path to a valid git repository!")
         sys.exit()
+
+    if all_users is False and list_committers is False and user_name is None:
+        print("Must supply a USER NAME if the -l or -a flags are not used")
+        sys.exit()
+
+    # everything else depends on git working, so hop to it
+    init_git(git_repo_path)
 
     if list_committers:
-        print('Git Committers:')
-        print_git_users(git_repo)
+        print_git_users(git_repo_path)
         sys.exit()
-        
-    # Get the start and end dates corresponding to exactly a year from today
-    since_str, before_str = generate_dates()
 
-    # Use git to determine what commits they made on which days
-    output = find_commits(user_name, git_repo, since_str, before_str)
+    # loop through the years
+    end_date = datetime.now()
+    start_date = end_date - timedelta(
+        days=365
+    )  # Get a year's worth of data, working back from today
 
-    # Clean up the output so it can be used
-    user_history, first_day, last_day = process_output(output)
+    for i in range(years):
+        print("")
+        years_label = "\t{} - {}".format(
+            start_date.strftime("%Y"), end_date.strftime("%Y")
+        )
+        user_history = find_commits(
+            user_name, git_repo_path, end_date, start_date, all_users
+        )
 
-    # Print everything out
-    header_len = print_months_header(verbose)
-    print_border(header_len)
-    print_heat_map(user_history, first_day, last_day, status_type, verbose)
-    print_border(header_len)
+        # Print everything out
+        header_len = print_months_header(verbose)
+        print_border(header_len, years_label)
+        print_heat_map(user_history, end_date, start_date, status_type, verbose)
+        print_border(header_len)
+        print("")
+
+        end_date = start_date
+        start_date = end_date - timedelta(days=365)
+
+        if verbose:
+            print_additional_stats(user_history, git_repo_path, user_name)
+
     print_graph_key(status_type)
-    print(' ')
 
-    if verbose:
-        print_additional_stats(user_history, git_repo, user_name)
+    print(" ")
 
-        
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     heatwave()
