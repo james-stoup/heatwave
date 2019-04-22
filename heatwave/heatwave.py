@@ -10,18 +10,19 @@ Date: 14 APR 2019
 
 """
 
-import sys
 import csv
 import optparse
-import time
 import os
-import click
 import subprocess
-import monthdelta
-import git
-from git import Repo
-from datetime import timedelta, date, datetime
+import sys
+import time
 from collections import defaultdict
+from datetime import date, datetime, timedelta
+
+import click
+import git
+import monthdelta
+from git import Repo
 
 
 def init_git(git_repo_path):
