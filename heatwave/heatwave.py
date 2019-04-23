@@ -289,7 +289,7 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose):
     help="Choose how to visualize the data",
 )
 @click.option("-v", "--verbose", is_flag=True, help="Prints additional information")
-def heatwave(
+def cli(
     user_name, git_repo_path, list_committers, years, all_users, status_type, verbose
 ):
     """ 
@@ -363,4 +363,4 @@ def heatwave(
 
 
 if __name__ == "__main__":
-    heatwave()
+    cli()
