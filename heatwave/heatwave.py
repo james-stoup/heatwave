@@ -112,7 +112,7 @@ def print_graph_key(status_type):
     """
     if status_type != "number":
 
-        print("  ==   KEY  ==")
+        print("  == COMMITS ==")
         print("    ", end="")
 
         status_values = generate_status_values()
