@@ -27,7 +27,11 @@ from git import Repo
 
 
 def init_git(git_repo_path):
-    """ Test to see if we can even connect to the repo given """
+    """ Test to see if we can even connect to the repo given 
+
+    :param git_repo_path: 
+
+    """
     repo = Repo(git_repo_path)
     if repo.bare:
         print("Error - unable to access the git repo")
@@ -35,7 +39,11 @@ def init_git(git_repo_path):
 
 
 def print_git_users(git_repo_path):
-    """ Print out a list of all users that have committed to the repo """
+    """ Print out a list of all users that have committed to the repo 
+
+    :param git_repo_path: 
+
+    """
     print("Git Committers:")
     g = git.Git(git_repo_path)
     lines = g.shortlog("-s").splitlines()
@@ -54,8 +62,13 @@ def print_git_users(git_repo_path):
 
 
 def print_additional_stats(user_history, git_repo, user_name):
-    """ Throw out some additional stats on the data generated """
+    """ Throw out some additional stats on the data generated 
 
+    :param user_history: 
+    :param git_repo: 
+    :param user_name: 
+
+    """
     if user_name is None:
         user_name = "All"
 
@@ -73,7 +86,9 @@ def print_additional_stats(user_history, git_repo, user_name):
 
 
 def generate_status_values():
-    """ Return the color and symbol values that will fill in the days  """
+    """ Return the color and symbol values that will fill in the days  
+    """
+
     space = "  "
     status_values = dict(
         color={
@@ -90,8 +105,11 @@ def generate_status_values():
 
 
 def print_graph_key(status_type):
-    """ Print out a key so the colors make sense """
+    """ Print out a key so the colors make sense 
 
+    :param status_type: 
+
+    """
     if status_type != "number":
 
         print("  ==   KEY  ==")
@@ -116,7 +134,13 @@ def print_graph_key(status_type):
 
 
 def print_status(shade, status_type, verbose):
-    """ Function to print a space of different shades of green (lightest to darkest) """
+    """ Function to print a space of different shades of green (lightest to darkest) 
+
+    :param shade: 
+    :param status_type: 
+    :param verbose: 
+
+    """
     space = "  "
     status = generate_status_values()
 
@@ -137,14 +161,26 @@ def print_status(shade, status_type, verbose):
 
 
 def daterange(start_date, end_date):
-    """ Return a series of dates from start to end  """
+    """ Return a series of dates from start to end  
 
+    :param start_date: 
+    :param end_date: 
+
+    """
     for n in range(int((end_date - start_date).days)):
         yield start_date + timedelta(n)
 
 
 def find_commits(user_name, git_repo_path, end_date, start_date, all_users):
-    """ Find the number of commits for a user on each day of the preceeding year  """
+    """ Find the number of commits for a user on each day of the preceeding year  
+
+    :param user_name: 
+    :param git_repo_path: 
+    :param end_date: 
+    :param start_date: 
+    :param all_users: 
+
+    """
     since_str = start_date.strftime("%d %b %Y")
     before_str = end_date.strftime("%d %b %Y")
 
@@ -186,8 +222,12 @@ def find_commits(user_name, git_repo_path, end_date, start_date, all_users):
 
 
 def print_border(size, msg=""):
-    """ Print a simple border """
+    """ Print a simple border 
 
+    :param size: 
+    :param msg: 
+
+    """
     for i in range(0, size):
         print("=", end="")
     print(msg, end="")
@@ -195,8 +235,11 @@ def print_border(size, msg=""):
 
 
 def print_months_header(verbose):
-    """ Print the header to show the months """
+    """ Print the header to show the months 
 
+    :param verbose: 
+
+    """
     prev_month = datetime.now()
     month_order = []
     month_header_str = "    "
@@ -221,8 +264,15 @@ def print_months_header(verbose):
 
 
 def print_heat_map(user_history, first_day, last_day, status_type, verbose):
-    """ Display the heat map to the terminal using colors or symbols """
+    """ Display the heat map to the terminal using colors or symbols 
 
+    :param user_history: 
+    :param first_day: 
+    :param last_day: 
+    :param status_type: 
+    :param verbose: 
+
+    """
     # make sure we always start on a Sunday
     year_of_commits = daterange(last_day, first_day + timedelta(days=1))
     for date in year_of_commits:
@@ -293,7 +343,6 @@ def cli(
     user_name, git_repo_path, list_committers, years, all_users, status_type, verbose
 ):
     """ 
-    Visualize your git history on the terminal!
 
     Now you can view a beautiful representation of your git progress
     right here on the command line. No longer will you have to log
@@ -309,8 +358,15 @@ def cli(
         # print number of commits each day and show additional stats
         ./heatwave.py stoup /home/jstoup/my_git_repo --status-type number -v
 
-    """
+    :param user_name: 
+    :param git_repo_path: 
+    :param list_committers: 
+    :param years: 
+    :param all_users: 
+    :param status_type: 
+    :param verbose: 
 
+    """
     # Error checking
     dot_git_dir = os.path.join(git_repo_path, ".git")
     if os.path.isdir(dot_git_dir) is False:
