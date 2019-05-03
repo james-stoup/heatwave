@@ -28,7 +28,7 @@ $ ./heatwave.py /path/to/my/repo -a
 View 3 years worth of commits:
 
 ```
-$ ./heatwave.py 'James Stoup' /path/to/my/repo -y 3
+$ ./heatwave.py /path/to/my/repo -a -y 3
 ```
 
 ![3 Years of Committs](https://github.com/james-stoup/heatwave/blob/master/resources/all-users-3-years.png)
