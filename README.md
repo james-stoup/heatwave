@@ -19,7 +19,7 @@ View repo stats for all committers:
 
 ```./heatwave.py /path/to/my/repo -a```
 
-[[https://github.com/james-stoup/heatwave/blob/master/resources/all-users-1-year.png]]
+![All Commits](https://github.com/james-stoup/heatwave/blob/master/resources/all-users-1-year.png)
 
 
 ### View All Committers For Several Years
@@ -27,7 +27,7 @@ View 3 years worth of commits:
 
 ```./heatwave.py 'James Stoup' /path/to/my/repo -y 3```
 
-[[https://github.com/james-stoup/heatwave/blob/master/resources/all-users-3-years.png]]
+![3 Years of Committs](https://github.com/james-stoup/heatwave/blob/master/resources/all-users-3-years.png)
 
 
 ### View A Specific Committer
@@ -35,7 +35,7 @@ View stats on a particular committer:
 
 ```./heatwave.py 'James Stoup' /path/to/my/repo```
 
-[[https://github.com/james-stoup/heatwave/blob/master/resources/one-user.png]]
+![One User]([https://github.com/james-stoup/heatwave/blob/master/resources/one-user.png)
 
 
 ### View Number of Commits
@@ -43,7 +43,7 @@ View number of commits a user made, instead of color:
 
 ```./heatwave.py --status-type number 'James Stoup' /path/to/my/repo```
 
-[[https://github.com/james-stoup/heatwave/blob/master/resources/one-user-numbers.png]]
+![One User By Numbers](https://github.com/james-stoup/heatwave/blob/master/resources/one-user-numbers.png)
 
 
 ### Other Options
