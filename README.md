@@ -1,11 +1,13 @@
 # heatwave
 
-A tool for displaying a visual representation of your git history. This generates a heat map of your git commits, similar to how GitHub's heat map looks.
+A tool for displaying a visual representation of your git history. 
+
+Heatwave generates a heat map of your git commits, similar to how GitHub's heat map looks. View all commits or a single user's commits for the past year or previous years.
 
 
-## Requirements
+## Installation
 
-To install all neede requirements use pip like so:
+Clone this repo and then install all neede requirements use pip like so:
 
 ```pip install -r requirements.txt'```
 
