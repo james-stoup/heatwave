@@ -17,7 +17,9 @@ Clone this repo and then install all neede requirements use pip like so:
 ### View All Committers
 View repo stats for all committers:
 
-```./heatwave.py /path/to/my/repo -a```
+```
+$ ./heatwave.py /path/to/my/repo -a
+```
 
 ![All Commits](https://github.com/james-stoup/heatwave/blob/master/resources/all-users-1-year.png)
 
@@ -25,7 +27,9 @@ View repo stats for all committers:
 ### View All Committers For Several Years
 View 3 years worth of commits:
 
-```./heatwave.py 'James Stoup' /path/to/my/repo -y 3```
+```
+$ ./heatwave.py 'James Stoup' /path/to/my/repo -y 3
+```
 
 ![3 Years of Committs](https://github.com/james-stoup/heatwave/blob/master/resources/all-users-3-years.png)
 
@@ -33,15 +37,19 @@ View 3 years worth of commits:
 ### View A Specific Committer
 View stats on a particular committer:
 
-```./heatwave.py 'James Stoup' /path/to/my/repo```
+```
+$ ./heatwave.py 'James Stoup' /path/to/my/repo
+```
 
-![One User]([https://github.com/james-stoup/heatwave/blob/master/resources/one-user.png)
+![One User](https://github.com/james-stoup/heatwave/blob/master/resources/one-user.png)
 
 
 ### View Number of Commits
 View number of commits a user made, instead of color:
 
-```./heatwave.py --status-type number 'James Stoup' /path/to/my/repo```
+```
+$ ./heatwave.py --status-type number 'James Stoup' /path/to/my/repo
+```
 
 ![One User By Numbers](https://github.com/james-stoup/heatwave/blob/master/resources/one-user-numbers.png)
 
@@ -49,15 +57,21 @@ View number of commits a user made, instead of color:
 ### Other Options
 List everyone who committed to this repo:
 
-```./heatwave.py /path/to/my/repo -l```
+```
+$ ./heatwave.py /path/to/my/repo -l
+```
 
 
 View detailed stats on a particular committer:
 
-```./heatwave.py -v 'James Stoup' /path/to/my/repo```
+```
+$ ./heatwave.py -v 'James Stoup' /path/to/my/repo
+```
 
 
 View detailed stats on everyone going back 10 years
 
-```./heatwave.py /path/to/my/repo -v -a -y 10```
+```
+$ ./heatwave.py /path/to/my/repo -v -a -y 10
+```
 
