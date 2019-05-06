@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 """
 
 A Git Terminal Commit Viewer
@@ -10,7 +9,6 @@ A Git Terminal Commit Viewer
 Date: 14 APR 2019
 
 """
-
 import csv
 import optparse
 import os

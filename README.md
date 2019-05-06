@@ -7,7 +7,14 @@ Heatwave generates a heat map of your git commits, similar to how GitHub's heat 
 
 ## Installation
 
-Clone this repo and then install all neede requirements use pip like so:
+### Recommend Way
+The easiest way to install heatwave is with pip.
+
+```pip install heatwave```
+
+### Manual Way
+
+To install this manually, clone this repo and then install all neede requirements use pip like so:
 
 ```pip install -r requirements.txt'```
 
