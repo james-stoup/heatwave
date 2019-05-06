@@ -8,7 +8,7 @@ def read(fname):
 
 setup(
     name="heatwave",
-    version="1.0",
+    version="1.0.1",
     description=("A way of visualizing a heat map of a git repo"),
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
@@ -20,5 +20,5 @@ setup(
     packages=find_packages("heatwave"),
     python_requires=">=3.7",
     install_requires=["Click", "MonthDelta", "GitPython"],
-    entry_points={"console_scripts": ["heatwave=heatwave:cli"]},
+    entry_points={"console_scripts": ["heatwave=heatwave.heatwave:cli"]},
 )
