@@ -17,8 +17,8 @@ setup(
     author_email="jrstoup@gmail.com",
     keywords="git visualize heatmap",
     license="GNU General Public License v3.0",
-    packages=find_packages(exclude=["contrib", "docs", "tests"]),
+    packages=find_packages("heatwave"),
     python_requires=">=3.7",
     install_requires=["Click", "MonthDelta", "GitPython"],
-    entry_points={"console_scripts": ["heatwave=heatwave.heatwave:cli"]},
+    entry_points={"console_scripts": ["heatwave=heatwave:cli"]},
 )
