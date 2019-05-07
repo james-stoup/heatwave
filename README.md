@@ -4,17 +4,22 @@ A tool for displaying a visual representation of your git history.
 
 Heatwave generates a heat map of your git commits, similar to how GitHub's heat map looks. View all commits or a single user's commits for the past year or previous years.
 
+![Wicked Cool Graphic!](https://github.com/james-stoup/heatwave/blob/master/resources/all-users-1-year.png)
 
-## Installation
 
-### Dependencies
+## Dependencies
 You will probably need to install an environment tool to manage different version of pythons. After you are on Python 3.7+ then install Pip to most easily install heatwave.
 
-[Install this first](https://github.com/pyenv/pyenv-installer "PyEnv")
-[Install this second](https://pip.pypa.io/en/stable/installing/ "Pip")
+[Install PyEnv first](https://github.com/pyenv/pyenv-installer "PyEnv")
+
+[Install Pip second](https://pip.pypa.io/en/stable/installing/ "Pip")
+
+
+## Installation
+I always vote for the easy way, but do what you want I guess...
 
 ### Recommend Way
-The easiest way to install heatwave is with pip.
+The fastest way to install heatwave is with pip.
 
 ```pip install heatwave```
 
@@ -22,7 +27,11 @@ The easiest way to install heatwave is with pip.
 
 To install this manually, clone this repo and then install all neede requirements use pip like so:
 
-```pip install -r requirements.txt'```
+```
+git clone https://github.com/james-stoup/heatwave.git
+cd heatwave
+pip install -r requirements.txt'
+```
 
   
 ## Usage
