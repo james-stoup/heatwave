@@ -7,6 +7,12 @@ Heatwave generates a heat map of your git commits, similar to how GitHub's heat 
 
 ## Installation
 
+### Dependencies
+You will probably need to install an environment tool to manage different version of pythons. After you are on Python 3.7+ then install Pip to most easily install heatwave.
+
+[Install this first](https://github.com/pyenv/pyenv-installer "PyEnv")
+[Install this second](https://pip.pypa.io/en/stable/installing/ "Pip")
+
 ### Recommend Way
 The easiest way to install heatwave is with pip.
 
