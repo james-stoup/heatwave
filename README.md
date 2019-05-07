@@ -1,10 +1,12 @@
-# heatwave
+# Heatwave
 
 A tool for displaying a visual representation of your git history. 
 
-Heatwave generates a heat map of your git commits, similar to how GitHub's heat map looks. View all commits or a single user's commits for the past year or previous years.
+Heatwave generates a heat map of your git commits, similar to how GitHub's heat map looks. View all commits or a single user's commits for the past year or previous years. Now in stylish red and green colors it makes the perfect Christmas gift.
 
-![Wicked Cool Graphic!](https://github.com/james-stoup/heatwave/blob/master/resources/all-users-1-year.png)
+Behold the beauty of command line graphics!
+
+![Wicked Cool Graphic!](https://github.com/james-stoup/heatwave/blob/master/resources/heatwave-red.png)
 
 
 ## Dependencies
