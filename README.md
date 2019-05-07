@@ -44,7 +44,7 @@ pip install -r requirements.txt'
 View repo stats for all committers:
 
 ```
-$ ./heatwave.py /path/to/my/repo -a
+$ heatwave /path/to/my/repo -a
 ```
 
 ![All Commits](https://github.com/james-stoup/heatwave/blob/master/resources/all-users-1-year.png)
@@ -54,7 +54,7 @@ $ ./heatwave.py /path/to/my/repo -a
 View 3 years worth of commits:
 
 ```
-$ ./heatwave.py /path/to/my/repo -a -y 3
+$ heatwave /path/to/my/repo -a -y 3
 ```
 
 ![3 Years of Committs](https://github.com/james-stoup/heatwave/blob/master/resources/all-users-3-years.png)
@@ -64,7 +64,7 @@ $ ./heatwave.py /path/to/my/repo -a -y 3
 View stats on a particular committer:
 
 ```
-$ ./heatwave.py 'James Stoup' /path/to/my/repo
+$ heatwave /path/to/my/repo 'James Stoup' 
 ```
 
 ![One User](https://github.com/james-stoup/heatwave/blob/master/resources/one-user.png)
@@ -74,7 +74,7 @@ $ ./heatwave.py 'James Stoup' /path/to/my/repo
 View number of commits a user made, instead of color:
 
 ```
-$ ./heatwave.py --status-type number 'James Stoup' /path/to/my/repo
+$ heatwave --status-type number /path/to/my/repo 'James Stoup'
 ```
 
 ![One User By Numbers](https://github.com/james-stoup/heatwave/blob/master/resources/one-user-numbers.png)
@@ -84,20 +84,20 @@ $ ./heatwave.py --status-type number 'James Stoup' /path/to/my/repo
 List everyone who committed to this repo:
 
 ```
-$ ./heatwave.py /path/to/my/repo -l
+$ heatwave /path/to/my/repo -l
 ```
 
 
 View detailed stats on a particular committer:
 
 ```
-$ ./heatwave.py -v 'James Stoup' /path/to/my/repo
+$ heatwave -v /path/to/my/repo 'James Stoup'
 ```
 
 
 View detailed stats on everyone going back 10 years
 
 ```
-$ ./heatwave.py /path/to/my/repo -v -a -y 10
+$ heatwave /path/to/my/repo -v -a -y 10
 ```
 
