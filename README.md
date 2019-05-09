@@ -1,7 +1,6 @@
 [![License](http://img.shields.io/:license-gpl3-blue.svg?style=flat-square)](http://www.gnu.org/licenses/gpl-3.0.html)
 
 # Heatwave
-
 A tool for displaying a visual representation of your git history. 
 
 Heatwave generates a heat map of your git commits, similar to how GitHub's heat map looks. View all commits or a single user's commits for the past year or previous years. Now in stylish red and green colors it makes the perfect Christmas gift.
@@ -29,7 +28,7 @@ The fastest way to install heatwave is with pip.
 
 ### Manual Way
 
-To install this manually, clone this repo and then install all neede requirements use pip like so:
+To install this manually clone this repo and then install the dependencies using pip:
 
 ```
 git clone https://github.com/james-stoup/heatwave.git
@@ -81,6 +80,8 @@ $ heatwave --status-type number /path/to/my/repo 'James Stoup'
 
 
 ### Other Options
+
+#### View Contributors
 List everyone who committed to this repo:
 
 ```
@@ -88,6 +89,7 @@ $ heatwave /path/to/my/repo -l
 ```
 
 
+#### Verbose Mode
 View detailed stats on a particular committer:
 
 ```
@@ -95,6 +97,7 @@ $ heatwave -v /path/to/my/repo 'James Stoup'
 ```
 
 
+#### Get Everything on Everyone
 View detailed stats on everyone going back 10 years
 
 ```
