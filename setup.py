@@ -14,7 +14,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/james-stoup/heatwave",
     author="James Stoup",
-    author_email="jrstoup@gmail.com",
+    author_email="james.r.stoup@gmail.com",
     keywords="git visualize heatmap",
     license="GNU General Public License v3.0",
     packages=find_packages(),
