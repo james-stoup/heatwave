@@ -1,5 +1,6 @@
-# Heatwave
+[![License](http://img.shields.io/:license-gpl3-blue.svg?style=flat-square)](http://www.gnu.org/licenses/gpl-3.0.html)
 
+# Heatwave
 A tool for displaying a visual representation of your git history. 
 
 Heatwave generates a heat map of your git commits, similar to how GitHub's heat map looks. View all commits or a single user's commits for the past year or previous years. Now in stylish red and green colors it makes the perfect Christmas gift.
@@ -27,7 +28,7 @@ The fastest way to install heatwave is with pip.
 
 ### Manual Way
 
-To install this manually, clone this repo and then install all neede requirements use pip like so:
+To install this manually clone this repo and then install the dependencies using pip:
 
 ```
 git clone https://github.com/james-stoup/heatwave.git
@@ -42,7 +43,7 @@ pip install -r requirements.txt'
 View repo stats for all committers:
 
 ```
-$ ./heatwave.py /path/to/my/repo -a
+$ heatwave /path/to/my/repo -a
 ```
 
 ![All Commits](https://github.com/james-stoup/heatwave/blob/master/resources/all-users-1-year.png)
@@ -52,7 +53,7 @@ $ ./heatwave.py /path/to/my/repo -a
 View 3 years worth of commits:
 
 ```
-$ ./heatwave.py /path/to/my/repo -a -y 3
+$ heatwave /path/to/my/repo -a -y 3
 ```
 
 ![3 Years of Committs](https://github.com/james-stoup/heatwave/blob/master/resources/all-users-3-years.png)
@@ -62,7 +63,7 @@ $ ./heatwave.py /path/to/my/repo -a -y 3
 View stats on a particular committer:
 
 ```
-$ ./heatwave.py 'James Stoup' /path/to/my/repo
+$ heatwave /path/to/my/repo 'James Stoup' 
 ```
 
 ![One User](https://github.com/james-stoup/heatwave/blob/master/resources/one-user.png)
@@ -72,30 +73,34 @@ $ ./heatwave.py 'James Stoup' /path/to/my/repo
 View number of commits a user made, instead of color:
 
 ```
-$ ./heatwave.py --status-type number 'James Stoup' /path/to/my/repo
+$ heatwave --status-type number /path/to/my/repo 'James Stoup'
 ```
 
 ![One User By Numbers](https://github.com/james-stoup/heatwave/blob/master/resources/one-user-numbers.png)
 
 
 ### Other Options
+
+#### View Contributors
 List everyone who committed to this repo:
 
 ```
-$ ./heatwave.py /path/to/my/repo -l
+$ heatwave /path/to/my/repo -l
 ```
 
 
+#### Verbose Mode
 View detailed stats on a particular committer:
 
 ```
-$ ./heatwave.py -v 'James Stoup' /path/to/my/repo
+$ heatwave -v /path/to/my/repo 'James Stoup'
 ```
 
 
+#### Get Everything on Everyone
 View detailed stats on everyone going back 10 years
 
 ```
-$ ./heatwave.py /path/to/my/repo -v -a -y 10
+$ heatwave /path/to/my/repo -v -a -y 10
 ```
 

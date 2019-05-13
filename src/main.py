@@ -26,6 +26,9 @@ import monthdelta
 from git import Repo
 
 
+VERSION = "1.1.0"
+
+
 def init_git(git_repo_path):
     """ Test to see if we can even connect to the repo given 
 
@@ -354,6 +357,7 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose, dark
 
 
 @click.command()
+@click.version_option(version=VERSION)
 @click.argument("git-repo-path", type=click.Path(exists=True), default=".")
 @click.argument("user-name", required=False)
 @click.option(
