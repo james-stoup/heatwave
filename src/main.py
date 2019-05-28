@@ -26,7 +26,7 @@ import monthdelta
 from git import Repo
 
 
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 
 
 def init_git(git_repo_path):
@@ -134,18 +134,23 @@ def print_graph_key(status_type, dark_mode):
     """ Print out a key so the colors make sense 
 
     :param status_type: 
+    :param dark_mode: 
 
     """
+
+    # number's don't need a key, only symbols and colors
     if status_type != "number":
 
         print("  == COMMITS ==")
         print("    ", end="")
 
         status_values = generate_status_values()
+        status_color = "symbol"
+
         # put in a check to handle darker terminals
-        if status_type is "color":
+        if status_type == "color":
             status_color = "greens"
-            if dark_mode is True:
+            if dark_mode == True:
                 status_color = "reds"
 
         for key, value in status_values[status_color].items():
@@ -181,16 +186,20 @@ def print_status(shade, status_type, verbose, dark_mode):
     if status_type == "number":
         if shade < 10:
             shade = " {}".format(shade)
-            if verbose:
-                print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m ", end="")
-            else:
-                print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m", end="")
+
+        if verbose:
+            print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m ", end="")
+        else:
+            print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m", end="")
     else:
+        status_color = ""
         # put in a check to handle darker terminals
-        if status_type is "color":
+        if status_type == "color":
             status_color = "greens"
             if dark_mode is True:
                 status_color = "reds"
+        else:
+            status_color = "symbol"
 
         shade = 5 if shade > 5 else shade
         if verbose:
