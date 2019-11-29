@@ -28,6 +28,16 @@ from git import Repo
 
 VERSION = "1.1.1"
 
+# shamelessly copied from thispointer.com by Varun
+def mergeDict(dict1, dict2):
+    """ Merge dictionaries and add values of common keys"""
+    dict3 = {**dict1, **dict2}
+    for key, value in dict3.items():
+        if key in dict1 and key in dict2:
+            dict3[key] = value + dict1[key]
+
+    return dict3
+
 
 def init_git(git_repo_path):
     """ Test to see if we can even connect to the repo given 
@@ -72,7 +82,7 @@ def print_additional_stats(user_history, git_repo, user_name):
     :param user_name: 
 
     """
-    if user_name is None:
+    if not user_name:
         user_name = "All"
 
     total_commit_days = len(user_history)
@@ -81,7 +91,6 @@ def print_additional_stats(user_history, git_repo, user_name):
     for key, value in user_history.items():
         total_commits += value
 
-    print("Git Repository : {}".format(os.path.basename(os.path.realpath(git_repo))))
     print("Git Author     : {}".format(user_name))
     print("Total Days     : {}".format(total_commit_days))
     print("Total Commits  : {}".format(total_commits))
@@ -367,8 +376,10 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose, dark
 
 @click.command()
 @click.version_option(version=VERSION)
-@click.argument("git-repo-path", type=click.Path(exists=True), default=".")
-@click.argument("user-name", required=False)
+@click.argument(
+    "git-repo-path", type=click.Path(exists=True), default=".", required=True
+)
+@click.argument("user-names", nargs=-1, required=False)
 @click.option(
     "-l",
     "--list-committers",
@@ -397,7 +408,7 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose, dark
     help="Prints in red for darker color schemes",
 )
 def cli(
-    user_name,
+    user_names,
     git_repo_path,
     list_committers,
     years,
@@ -414,24 +425,28 @@ def cli(
     made this year, now you can feel inadequate without ever having
     to leave the command line!
 
-    Example: 
-        # print standard output
-        ./heatwave.py "James Stoup" /home/jstoup/my_git_repo
+    ######### Example 1 #########
 
-    Example:
-        # print number of commits each day and show additional stats
-        ./heatwave.py stoup /home/jstoup/my_git_repo --status-type number -v
+        Print standard output
 
-    :param user_name: 
-    :param git_repo_path: 
-    :param list_committers: 
-    :param years: 
-    :param all_users: 
-    :param status_type: 
-    :param verbose: 
-    :param dark_mode: 
+        ./heatwave.py /path/to/git/repo "James Stoup"
+
+
+    ######### Example 2 #########
+
+        Print number of commits each day and show additional stats
+
+        ./heatwave.py /path/to/git/repo stoup --status-type number -v
+
+
+    ######### Example 3 #########
+
+        Print several users combined output
+
+        ./heatwave.py /path/to/git/repo james, bob, "LORD CODER III", jack
 
     """
+
     # Error checking
     dot_git_dir = os.path.join(git_repo_path, ".git")
     if os.path.isdir(dot_git_dir) is False:
@@ -439,7 +454,7 @@ def cli(
         print("Please enter a path to a valid git repository!")
         sys.exit()
 
-    if all_users is False and list_committers is False and user_name is None:
+    if all_users is False and list_committers is False and not user_names:
         print("Must supply a USER NAME if the -l or -a flags are not used")
         sys.exit()
 
@@ -461,24 +476,32 @@ def cli(
         years_label = "\t{} - {}".format(
             start_date.strftime("%Y"), end_date.strftime("%Y")
         )
-        user_history = find_commits(
-            user_name, git_repo_path, end_date, start_date, all_users
-        )
+
+        # this handles multiple users, a new and handy feature!
+        merged_history = {}
+
+        for user in user_names:
+            # find each user's history
+            user_history = find_commits(
+                user, git_repo_path, end_date, start_date, all_users
+            )
+
+            if verbose:
+                print_additional_stats(user_history, git_repo_path, user)
+
+            merged_history = mergeDict(merged_history, user_history)
 
         # Print everything out
         header_len = print_months_header(verbose)
         print_border(header_len, years_label)
         print_heat_map(
-            user_history, end_date, start_date, status_type, verbose, dark_mode
+            merged_history, end_date, start_date, status_type, verbose, dark_mode
         )
         print_border(header_len)
         print("")
 
         end_date = start_date
         start_date = end_date - timedelta(days=365)
-
-        if verbose:
-            print_additional_stats(user_history, git_repo_path, user_name)
 
     print_graph_key(status_type, dark_mode)
 
