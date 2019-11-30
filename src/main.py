@@ -27,7 +27,7 @@ import git
 import monthdelta
 from git import Repo
 
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 
 # shamelessly copied from thispointer.com by Varun
 def mergeDict(dict1, dict2):
