@@ -33,7 +33,7 @@ To install this manually clone this repo and then install the dependencies using
 ```
 git clone https://github.com/james-stoup/heatwave.git
 cd heatwave
-pip install -r requirements.txt'
+pip install -r requirements.txt
 ```
 
   
