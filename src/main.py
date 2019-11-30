@@ -18,13 +18,14 @@ import subprocess
 import sys
 import time
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date
+from datetime import datetime
+from datetime import timedelta
 
 import click
 import git
 import monthdelta
 from git import Repo
-
 
 VERSION = "1.2.0"
 
@@ -478,6 +479,13 @@ def cli(
         Print several users combined output
 
         ./heatwave.py /path/to/git/repo james, bob, "LORD CODER III", jack
+
+
+    ######### Example 4 #########
+
+        Change the default offset to a step of 5
+
+        ./heatwave.py /path/to/git/repo captain_derp -o 5
 
     """
 
