@@ -18,15 +18,26 @@ import subprocess
 import sys
 import time
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date
+from datetime import datetime
+from datetime import timedelta
 
 import click
 import git
 import monthdelta
 from git import Repo
 
+VERSION = "1.2.1"
 
-VERSION = "1.1.0"
+# shamelessly copied from thispointer.com by Varun
+def mergeDict(dict1, dict2):
+    """ Merge dictionaries and add values of common keys"""
+    dict3 = {**dict1, **dict2}
+    for key, value in dict3.items():
+        if key in dict1 and key in dict2:
+            dict3[key] = value + dict1[key]
+
+    return dict3
 
 
 def init_git(git_repo_path):
@@ -72,7 +83,7 @@ def print_additional_stats(user_history, git_repo, user_name):
     :param user_name: 
 
     """
-    if user_name is None:
+    if not user_name:
         user_name = "All"
 
     total_commit_days = len(user_history)
@@ -81,16 +92,34 @@ def print_additional_stats(user_history, git_repo, user_name):
     for key, value in user_history.items():
         total_commits += value
 
-    print("Git Repository : {}".format(os.path.basename(os.path.realpath(git_repo))))
     print("Git Author     : {}".format(user_name))
     print("Total Days     : {}".format(total_commit_days))
     print("Total Commits  : {}".format(total_commits))
     print("")
 
 
+def gen_slots(offset):
+    """ Generate the slots that the slotter function will use"""
+
+    # the slots list will get used by the legend at the end
+    slots = [offset * i for i in range(1, 6)]
+    return slots
+
+
+def slotter(offset, input_value):
+    """ Creates buckets based on an offset and returns which index the input goes in """
+    slots = gen_slots(offset)
+
+    # walk through the slots until we find the index that it goes in
+    for index, value in enumerate(slots):
+        if input_value <= value:
+            return index + 1
+
+    return len(slots)
+
+
 def generate_status_values():
-    """ Return the color and symbol values that will fill in the days  
-    """
+    """ Return the color and symbol values that will fill in the days """
 
     space = "  "
     end = u"\u001b[0m"
@@ -130,42 +159,50 @@ def generate_status_values():
     return status_values
 
 
-def print_graph_key(status_type, dark_mode):
+def print_graph_key(status_type, dark_mode, shade_offset):
     """ Print out a key so the colors make sense 
 
     :param status_type: 
+    :param dark_mode: 
 
     """
+
+    # number's don't need a key, only symbols and colors
     if status_type != "number":
 
         print("  == COMMITS ==")
-        print("    ", end="")
 
         status_values = generate_status_values()
+        status_color = "symbol"
+
         # put in a check to handle darker terminals
-        if status_type is "color":
+        if status_type == "color":
             status_color = "greens"
-            if dark_mode is True:
+            if dark_mode == True:
                 status_color = "reds"
 
-        for key, value in status_values[status_color].items():
-            print("{}".format(value), end="")
+        # I liked the colors to be horizontal rather than vertical,
+        # but now that you can specify the offset, if the offset is
+        # larger than 4 then it starts to not line up anymore and so
+        # to permanently combat that I just did it this way. Sigh.
+        slots = gen_slots(shade_offset)
+        print("          0")
 
-        print("")
-        print("  0 ", end="")
+        for key, value in enumerate(slots):
+            color_to_print = status_values[status_color][key + 1]
+            print("    {}".format(color_to_print), end="")
+            print("{}".format(color_to_print), end="")
 
-        for key, value in status_values[status_color].items():
-            if key == 5:
-                print("{}+".format(key), end="")
+            if key == len(slots) - 1:
+                print("  {}+".format(value))
             else:
-                print("{} ".format(key), end="")
+                print("  {} ".format(value))
 
-        print("")
         print("  ============")
         print("")
 
 
-def print_status(shade, status_type, verbose, dark_mode):
+def print_status(shade, status_type, verbose, dark_mode, shade_offset):
     """ Function to print a space of different shades of green (lightest to darkest) 
 
     :param shade: 
@@ -181,22 +218,27 @@ def print_status(shade, status_type, verbose, dark_mode):
     if status_type == "number":
         if shade < 10:
             shade = " {}".format(shade)
-            if verbose:
-                print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m ", end="")
-            else:
-                print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m", end="")
+
+        if verbose:
+            print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m ", end="")
+        else:
+            print(u"\u001b[48;5;253m" + str(shade) + u"\u001b[0m", end="")
     else:
+        status_color = ""
         # put in a check to handle darker terminals
-        if status_type is "color":
+        if status_type == "color":
             status_color = "greens"
             if dark_mode is True:
                 status_color = "reds"
-
-        shade = 5 if shade > 5 else shade
-        if verbose:
-            print("{} ".format(status[status_color].get(shade, space)), end="")
         else:
-            print("{}".format(status[status_color].get(shade, space)), end="")
+            status_color = "symbol"
+
+        new_shade = slotter(shade_offset, shade)
+
+        if verbose:
+            print("{} ".format(status[status_color].get(new_shade, space)), end="")
+        else:
+            print("{}".format(status[status_color].get(new_shade, space)), end="")
 
 
 def daterange(start_date, end_date):
@@ -302,7 +344,9 @@ def print_months_header(verbose):
     return len(month_header_str)
 
 
-def print_heat_map(user_history, first_day, last_day, status_type, verbose, dark_mode):
+def print_heat_map(
+    user_history, first_day, last_day, status_type, verbose, dark_mode, shade_offset
+):
     """ Display the heat map to the terminal using colors or symbols 
 
     :param user_history: 
@@ -343,7 +387,9 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose, dark
         # print each commit day in the chosen format
         for day in days:
             if day in user_history:
-                print_status(user_history[day], status_type, verbose, dark_mode)
+                print_status(
+                    user_history[day], status_type, verbose, dark_mode, shade_offset
+                )
             else:
                 # verbose mode will print the day of the month
                 if verbose:
@@ -358,8 +404,10 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose, dark
 
 @click.command()
 @click.version_option(version=VERSION)
-@click.argument("git-repo-path", type=click.Path(exists=True), default=".")
-@click.argument("user-name", required=False)
+@click.argument(
+    "git-repo-path", type=click.Path(exists=True), default=".", required=True
+)
+@click.argument("user-names", nargs=-1, required=False)
 @click.option(
     "-l",
     "--list-committers",
@@ -379,6 +427,12 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose, dark
     default="color",
     help="Choose how to visualize the data",
 )
+@click.option(
+    "-o",
+    "--shade-offset",
+    default=1,
+    help="Manually set the offset for determining the colors",
+)
 @click.option("-v", "--verbose", is_flag=True, help="Prints additional information")
 @click.option(
     "-d",
@@ -388,12 +442,13 @@ def print_heat_map(user_history, first_day, last_day, status_type, verbose, dark
     help="Prints in red for darker color schemes",
 )
 def cli(
-    user_name,
+    user_names,
     git_repo_path,
     list_committers,
     years,
     all_users,
     status_type,
+    shade_offset,
     verbose,
     dark_mode,
 ):
@@ -405,24 +460,35 @@ def cli(
     made this year, now you can feel inadequate without ever having
     to leave the command line!
 
-    Example: 
-        # print standard output
-        ./heatwave.py "James Stoup" /home/jstoup/my_git_repo
+    ######### Example 1 #########
 
-    Example:
-        # print number of commits each day and show additional stats
-        ./heatwave.py stoup /home/jstoup/my_git_repo --status-type number -v
+        Print standard output
 
-    :param user_name: 
-    :param git_repo_path: 
-    :param list_committers: 
-    :param years: 
-    :param all_users: 
-    :param status_type: 
-    :param verbose: 
-    :param dark_mode: 
+        ./heatwave.py /path/to/git/repo "James Stoup"
+
+
+    ######### Example 2 #########
+
+        Print number of commits each day and show additional stats
+
+        ./heatwave.py /path/to/git/repo stoup --status-type number -v
+
+
+    ######### Example 3 #########
+
+        Print several users combined output
+
+        ./heatwave.py /path/to/git/repo james, bob, "LORD CODER III", jack
+
+
+    ######### Example 4 #########
+
+        Change the default offset to a step of 5
+
+        ./heatwave.py /path/to/git/repo captain_derp -o 5
 
     """
+
     # Error checking
     dot_git_dir = os.path.join(git_repo_path, ".git")
     if os.path.isdir(dot_git_dir) is False:
@@ -430,7 +496,7 @@ def cli(
         print("Please enter a path to a valid git repository!")
         sys.exit()
 
-    if all_users is False and list_committers is False and user_name is None:
+    if all_users is False and list_committers is False and not user_names:
         print("Must supply a USER NAME if the -l or -a flags are not used")
         sys.exit()
 
@@ -452,15 +518,36 @@ def cli(
         years_label = "\t{} - {}".format(
             start_date.strftime("%Y"), end_date.strftime("%Y")
         )
-        user_history = find_commits(
-            user_name, git_repo_path, end_date, start_date, all_users
-        )
+
+        # if no users specified, just print everything
+        if all_users:
+            user_names = ["All"]
+
+        # this handles multiple users, a new and handy feature!
+        merged_history = {}
+
+        for user in user_names:
+            # find each user's history
+            user_history = find_commits(
+                user, git_repo_path, end_date, start_date, all_users
+            )
+
+            if verbose:
+                print_additional_stats(user_history, git_repo_path, user)
+
+            merged_history = mergeDict(merged_history, user_history)
 
         # Print everything out
         header_len = print_months_header(verbose)
         print_border(header_len, years_label)
         print_heat_map(
-            user_history, end_date, start_date, status_type, verbose, dark_mode
+            merged_history,
+            end_date,
+            start_date,
+            status_type,
+            verbose,
+            dark_mode,
+            shade_offset,
         )
         print_border(header_len)
         print("")
@@ -468,10 +555,7 @@ def cli(
         end_date = start_date
         start_date = end_date - timedelta(days=365)
 
-        if verbose:
-            print_additional_stats(user_history, git_repo_path, user_name)
-
-    print_graph_key(status_type, dark_mode)
+    print_graph_key(status_type, dark_mode, shade_offset)
 
     print(" ")
 
