@@ -10,8 +10,9 @@ Date: 14 APR 2019
 
 """
 
-
+from operator import itemgetter
 import csv
+import operator
 import optparse
 import os
 import subprocess
@@ -52,7 +53,7 @@ def init_git(git_repo_path):
         sys.exit()
 
 
-def print_git_users(git_repo_path):
+def print_git_users(git_repo_path, sorted_by_name=False):
     """ Print out a list of all users that have committed to the repo 
 
     :param git_repo_path: 
@@ -67,10 +68,18 @@ def print_git_users(git_repo_path):
         clean_line = line.strip()
         commits = (" ".join(line.split()).split(" ", 1))[0]
         author = (" ".join(line.split()).split(" ", 1))[1]
-        users[author] = commits
+        users[author.upper()] = (int(commits), author)
 
-    for key, val in users.items():
-        print("     {:>5} - {}".format(val, key))
+    # sort by commit count
+    sorted_users = sorted(users.items(), key=itemgetter(1), reverse=True)
+
+    if sorted_by_name:
+        # sort by user name irrespective of case
+        sorted_users = sorted(users.items(), key=itemgetter(0))
+
+    # print sorted users
+    for val in sorted_users:
+        print("     {:>5} - {}".format(val[1][0], val[1][1]))
 
     print("")
 
@@ -412,7 +421,13 @@ def print_heat_map(
     "-l",
     "--list-committers",
     is_flag=True,
-    help="Lists all the committers for a git repo",
+    help="Lists all the committers for a git repo, sorted by commits",
+)
+@click.option(
+    "-L",
+    "--list-committers-by-name",
+    is_flag=True,
+    help="Lists all the committers for a git repo, sorted by user name",
 )
 @click.option("-y", "--years", default=1, help="Print more than one year")
 @click.option(
@@ -445,6 +460,7 @@ def cli(
     user_names,
     git_repo_path,
     list_committers,
+    list_committers_by_name,
     years,
     all_users,
     status_type,
@@ -496,8 +512,13 @@ def cli(
         print("Please enter a path to a valid git repository!")
         sys.exit()
 
-    if all_users is False and list_committers is False and not user_names:
-        print("Must supply a USER NAME if the -l or -a flags are not used")
+    if (
+        all_users is False
+        and list_committers is False
+        and list_committers_by_name is False
+        and not user_names
+    ):
+        print("Must supply a USER NAME if the -l, -L, or -a flags are not used")
         sys.exit()
 
     # everything else depends on git working, so hop to it
@@ -505,6 +526,10 @@ def cli(
 
     if list_committers:
         print_git_users(git_repo_path)
+        sys.exit()
+
+    if list_committers_by_name:
+        print_git_users(git_repo_path, True)
         sys.exit()
 
     # loop through the years
