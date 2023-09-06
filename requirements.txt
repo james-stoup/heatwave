@@ -6,7 +6,7 @@ black-percentage-tester==0.0.3
 Click==7.0
 colorama==0.4.1
 gitdb2==2.0.5
-GitPython==2.1.11
+GitPython==3.1.34
 isort==4.3.17
 MonthDelta==0.9.1
 smmap2==2.0.5
